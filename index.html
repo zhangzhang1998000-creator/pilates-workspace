@@ -3,77 +3,125 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pilates Workspace | 普拉提学习工作台</title>
+  <title>Pilates Workspace | 普拉提教练进阶工作台</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="navbar">
-    <div class="logo">🧘‍♀️ Pilates Workspace</div>
+    <div class="logo">🧘‍♀️ Pilates Pro Workspace</div>
     <nav class="nav-links">
-      <button class="nav-btn active" onclick="switchTab('dashboard')">仪表盘</button>
-      <button class="nav-btn" onclick="switchTab('library')">动作库</button>
-      <button class="nav-btn" onclick="switchTab('logs')">训练记录</button>
+      <button class="nav-btn active" onclick="switchTab('dashboard')">今日训练</button>
+      <button class="nav-btn" onclick="switchTab('library')">专业动作库</button>
+      <button class="nav-btn" onclick="switchTab('study')">教培知识库</button>
+      <button class="nav-btn" onclick="switchTab('logs')">训练与复盘日志</button>
     </nav>
   </header>
 
   <main class="container">
     <section id="dashboard" class="tab-content active">
-      <h2>👋 欢迎回来，开始今天的普拉提练习！</h2>
-      
-      <div class="stats-grid">
-        <div class="stat-card">
-          <h3>今日任务完成度</h3>
-          <p class="stat-num" id="today-progress">0/0</p>
-        </div>
-        <div class="stat-card">
-          <h3>累计训练次数</h3>
-          <p class="stat-num" id="total-logs-count">0 次</p>
+      <div class="welcome-card">
+        <h2>👋 选择你今天的练习模式</h2>
+        <p>根据今天的时间和场地安排，定制你的训练与学习策略：</p>
+        
+        <div class="mode-selector">
+          <button class="mode-btn active" id="btn-mode-home" onclick="setMode('home')">
+            🏠 工作日·居家 (30 Min)
+          </button>
+          <button class="mode-btn" id="btn-mode-studio" onclick="setMode('studio')">
+            🧘‍♀️ 工作日·馆课 (1-2 节)
+          </button>
+          <button class="mode-btn" id="btn-mode-weekend" onclick="setMode('weekend')">
+            ⏳ 周末·深度研习 (90+ Min)
+          </button>
         </div>
       </div>
 
       <div class="card">
-        <h3>📋 今日普拉提练习清单</h3>
+        <h3 id="mode-title">📋 模式清单</h3>
+        <p class="subtitle" id="mode-desc"></p>
         <ul class="task-list" id="task-list">
           </ul>
       </div>
 
-      <div class="card">
-        <h3>📚 推荐学习资料</h3>
-        <div class="links-grid">
-          <a href="https://www.youtube.com" target="_blank" class="resource-link">🎬 YouTube 普拉提教程</a>
-          <a href="https://www.bilibili.com" target="_blank" class="resource-link">📺 B站精选动作讲解</a>
-          <a href="#" class="resource-link">📄 解剖学与核心控制笔记</a>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <h3>今日清单进度</h3>
+          <p class="stat-num" id="today-progress">0/0</p>
+        </div>
+        <div class="stat-card">
+          <h3>累计记录/复盘</h3>
+          <p class="stat-num" id="total-logs-count">0 次</p>
         </div>
       </div>
     </section>
 
     <section id="library" class="tab-content">
-      <h2>📖 普拉提经典动作库</h2>
+      <h2>📖 普拉提专业动作库 (备课/解剖)</h2>
+      <p class="subtitle">积累教学口令与解剖重点，为兼职教学打基础。</p>
       <div class="grid-list" id="library-list">
         </div>
     </section>
 
+    <section id="study" class="tab-content">
+      <h2>📚 普拉提兼职/教培进阶资料</h2>
+      <div class="study-grid">
+        <div class="card">
+          <h3>🦴 人体解剖与生物力学</h3>
+          <div class="links-grid">
+            <a href="https://www.google.com" target="_blank" class="resource-link">📖 骨盆与脊柱中立位评估要点</a>
+            <a href="https://www.google.com" target="_blank" class="resource-link">🎥 核心肌群（腹横肌/盆底肌）激活解剖动画</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>📋 编排逻辑与授课技巧 (Sequencing)</h3>
+          <div class="links-grid">
+            <a href="https://www.google.com" target="_blank" class="resource-link">📄 普拉提大器械（Reformer）课程编排模板</a>
+            <a href="https://www.google.com" target="_blank" class="resource-link">💡 常见代偿动作纠正与安全退阶方案</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>🎬 优秀教练带课视频学习</h3>
+          <div class="links-grid">
+            <a href="https://www.youtube.com" target="_blank" class="resource-link">🎬 YouTube 经典垫上带课口令示范</a>
+            <a href="https://www.bilibili.com" target="_blank" class="resource-link">📺 B站小班课互动与节奏控制拆解</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="logs" class="tab-content">
-      <h2>✍️ 记录今天的训练</h2>
+      <h2>✍️ 训练与备课复盘日志</h2>
       <div class="card">
         <form id="log-form" onsubmit="addLog(event)">
-          <div class="form-group">
-            <label for="log-date">日期：</label>
-            <input type="date" id="log-date" required>
+          <div class="form-group-row">
+            <div class="form-group">
+              <label for="log-date">日期：</label>
+              <input type="date" id="log-date" required>
+            </div>
+            <div class="form-group">
+              <label for="log-type">类型：</label>
+              <select id="log-type">
+                <option value="居家自主">居家自主</option>
+                <option value="馆课体验/观察">馆课体验/观察</option>
+                <option value="备课演练">备课演练</option>
+              </select>
+            </div>
           </div>
           <div class="form-group">
             <label for="log-duration">时长（分钟）：</label>
-            <input type="number" id="log-duration" min="1" placeholder="例如：45" required>
+            <input type="number" id="log-duration" min="1" placeholder="例如：60" required>
           </div>
           <div class="form-group">
-            <label for="log-note">训练心得 / 练习动作：</label>
-            <textarea id="log-note" rows="3" placeholder="记录今天练习的感受，如：核心稳定性提升..." required></textarea>
+            <label for="log-note">心得 / 启发 / 教练带课口令笔记：</label>
+            <textarea id="log-note" rows="4" placeholder="例如：今天馆课教练在讲解百次呼吸时用的比喻很好；或者记下自己的发力代偿问题..." required></textarea>
           </div>
-          <button type="submit" class="primary-btn">提交记录</button>
+          <button type="submit" class="primary-btn">保存复盘笔记</button>
         </form>
       </div>
 
-      <h3>📅 历史训练日志</h3>
+      <h3>📅 历史日志</h3>
       <div class="log-history" id="log-history">
         </div>
     </section>
