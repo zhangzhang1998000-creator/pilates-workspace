@@ -22,7 +22,6 @@ body {
   padding-bottom: 50px;
 }
 
-/* 导航栏 */
 .navbar {
   background-color: var(--card-bg);
   padding: 1rem 2rem;
@@ -53,7 +52,7 @@ body {
   font-size: 0.9rem;
   cursor: pointer;
   border-radius: 20px;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
   color: #555;
 }
 
@@ -62,24 +61,14 @@ body {
   color: white;
 }
 
-/* 主容器 */
 .container {
   max-width: 900px;
   margin: 20px auto;
   padding: 0 16px;
 }
 
-.tab-content {
-  display: none;
-}
-
-.tab-content.active {
-  display: block;
-}
-
-h2 {
-  margin-bottom: 6px;
-}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 
 .subtitle {
   color: #666;
@@ -87,7 +76,6 @@ h2 {
   margin-bottom: 16px;
 }
 
-/* 通用卡片 */
 .card, .welcome-card {
   background: var(--card-bg);
   padding: 20px;
@@ -96,7 +84,6 @@ h2 {
   margin-bottom: 20px;
 }
 
-/* 模式选择器 */
 .mode-selector {
   display: flex;
   gap: 10px;
@@ -124,10 +111,31 @@ h2 {
   border-color: var(--primary-color);
 }
 
-/* 任务列表 */
+/* 动态任务添加输入框 */
+.add-task-box {
+  display: flex;
+  gap: 8px;
+  margin: 15px 0;
+}
+
+.add-task-box input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.small-btn {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
 .task-list {
   list-style: none;
-  margin-top: 10px;
 }
 
 .task-item {
@@ -156,7 +164,6 @@ h2 {
   color: white;
 }
 
-/* 统计 */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -178,7 +185,7 @@ h2 {
   margin-top: 6px;
 }
 
-/* 专业动作卡片 */
+/* 动作库卡片列表 */
 .grid-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -195,7 +202,7 @@ h2 {
 
 .action-card h4 {
   color: var(--primary-color);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .tag {
@@ -215,46 +222,14 @@ h2 {
   margin-bottom: 4px;
 }
 
-/* 学习区布局 */
-.study-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.links-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.resource-link {
-  color: var(--primary-color);
-  text-decoration: none;
-  padding: 10px;
-  background: #f0f5f1;
-  border-radius: 6px;
-  font-size: 0.9rem;
-}
-
-.resource-link:hover {
-  background: #e1ede3;
-}
-
-/* 表单与日志 */
+/* 表单样式 */
 .form-group-row {
   display: flex;
   gap: 16px;
 }
 
-.form-group-row .form-group {
-  flex: 1;
-}
-
-.form-group {
-  margin-bottom: 12px;
-}
+.form-group-row .form-group { flex: 1; }
+.form-group { margin-bottom: 12px; }
 
 .form-group label {
   display: block;
@@ -280,6 +255,20 @@ h2 {
   width: 100%;
   font-size: 1rem;
 }
+
+.study-grid { display: flex; flex-direction: column; gap: 16px; }
+.links-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+
+.resource-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  padding: 10px;
+  background: #f0f5f1;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.resource-link:hover { background: #e1ede3; }
 
 .log-item {
   background: var(--card-bg);
