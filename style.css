@@ -1,12 +1,11 @@
-/* 全局样式定义 */
 :root {
-  --primary-color: #6a9955;
-  --primary-hover: #527941;
-  --bg-color: #f7f9f6;
+  --primary-color: #4a7c59;
+  --primary-hover: #3b6346;
+  --bg-color: #f4f6f3;
   --card-bg: #ffffff;
-  --text-color: #2c3e50;
+  --text-color: #2b3a2f;
   --border-radius: 12px;
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 * {
@@ -20,7 +19,7 @@ body {
   background-color: var(--bg-color);
   color: var(--text-color);
   line-height: 1.6;
-  padding-bottom: 40px;
+  padding-bottom: 50px;
 }
 
 /* 导航栏 */
@@ -50,12 +49,12 @@ body {
 .nav-btn {
   background: none;
   border: none;
-  padding: 8px 16px;
-  font-size: 0.95rem;
+  padding: 8px 14px;
+  font-size: 0.9rem;
   cursor: pointer;
   border-radius: 20px;
   transition: all 0.2s ease;
-  color: #666;
+  color: #555;
 }
 
 .nav-btn.active, .nav-btn:hover {
@@ -63,14 +62,13 @@ body {
   color: white;
 }
 
-/* 主主体容器 */
+/* 主容器 */
 .container {
   max-width: 900px;
   margin: 20px auto;
   padding: 0 16px;
 }
 
-/* 选项卡内容切换 */
 .tab-content {
   display: none;
 }
@@ -80,12 +78,17 @@ body {
 }
 
 h2 {
-  margin-bottom: 16px;
-  font-size: 1.5rem;
+  margin-bottom: 6px;
 }
 
-/* 通用卡片样式 */
-.card {
+.subtitle {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+/* 通用卡片 */
+.card, .welcome-card {
   background: var(--card-bg);
   padding: 20px;
   border-radius: var(--border-radius);
@@ -93,17 +96,71 @@ h2 {
   margin-bottom: 20px;
 }
 
-.card h3 {
-  margin-bottom: 12px;
-  color: var(--primary-color);
+/* 模式选择器 */
+.mode-selector {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  flex-wrap: wrap;
 }
 
-/* 网格与布局 */
+.mode-btn {
+  flex: 1;
+  min-width: 200px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.mode-btn.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+/* 任务列表 */
+.task-list {
+  list-style: none;
+  margin-top: 10px;
+}
+
+.task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.task-item.completed span {
+  text-decoration: line-through;
+  color: #aaa;
+}
+
+.toggle-btn {
+  background-color: #eee;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.task-item.completed .toggle-btn {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* 统计 */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
-  margin-bottom: 20px;
 }
 
 .stat-card {
@@ -118,70 +175,13 @@ h2 {
   font-size: 1.8rem;
   font-weight: bold;
   color: var(--primary-color);
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
-/* 任务列表 */
-.task-list {
-  list-style: none;
-}
-
-.task-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.task-item:last-child {
-  border-bottom: none;
-}
-
-.task-item.completed span {
-  text-decoration: line-through;
-  color: #a0a0a0;
-}
-
-.toggle-btn {
-  background-color: #e0e0e0;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.85rem;
-}
-
-.task-item.completed .toggle-btn {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-/* 资源链接 */
-.links-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.resource-link {
-  color: var(--primary-color);
-  text-decoration: none;
-  font-weight: 500;
-  padding: 8px 12px;
-  background: #f0f7ee;
-  border-radius: 6px;
-  transition: background 0.2s;
-}
-
-.resource-link:hover {
-  background: #e1efe0;
-}
-
-/* 动作库网格 */
+/* 专业动作卡片 */
 .grid-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 16px;
 }
 
@@ -190,6 +190,7 @@ h2 {
   padding: 16px;
   border-radius: var(--border-radius);
   box-shadow: var(--shadow);
+  border-left: 4px solid var(--primary-color);
 }
 
 .action-card h4 {
@@ -197,12 +198,60 @@ h2 {
   margin-bottom: 6px;
 }
 
+.tag {
+  display: inline-block;
+  background: #e8f0e9;
+  color: var(--primary-color);
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
 .action-card p {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+/* 学习区布局 */
+.study-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.links-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.resource-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  padding: 10px;
+  background: #f0f5f1;
+  border-radius: 6px;
   font-size: 0.9rem;
-  color: #666;
+}
+
+.resource-link:hover {
+  background: #e1ede3;
 }
 
 /* 表单与日志 */
+.form-group-row {
+  display: flex;
+  gap: 16px;
+}
+
+.form-group-row .form-group {
+  flex: 1;
+}
+
 .form-group {
   margin-bottom: 12px;
 }
@@ -210,30 +259,26 @@ h2 {
 .form-group label {
   display: block;
   margin-bottom: 4px;
-  font-weight: 500;
+  font-size: 0.9rem;
 }
 
-.form-group input, .form-group textarea {
+.form-group input, .form-group select, .form-group textarea {
   width: 100%;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border: 1px solid #ccc;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .primary-btn {
   background-color: var(--primary-color);
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 10px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 1rem;
   width: 100%;
-}
-
-.primary-btn:hover {
-  background-color: var(--primary-hover);
+  font-size: 1rem;
 }
 
 .log-item {
@@ -241,22 +286,20 @@ h2 {
   padding: 14px;
   border-radius: 8px;
   box-shadow: var(--shadow);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .log-header {
   display: flex;
   justify-content: space-between;
-  font-weight: bold;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--primary-color);
+  font-weight: bold;
   margin-bottom: 6px;
 }
 
-/* 移动端适配优化 */
 @media (max-width: 600px) {
-  .navbar {
-    flex-direction: column;
-    gap: 10px;
-  }
+  .navbar { flex-direction: column; gap: 10px; }
+  .mode-selector { flex-direction: column; }
+  .form-group-row { flex-direction: column; gap: 0; }
 }
