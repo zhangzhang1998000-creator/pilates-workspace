@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pilates Workspace | 普拉提教练进阶工作台</title>
+  <title>Pilates Workspace | 普拉提教练全能工作台</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,34 +13,31 @@
       <button class="nav-btn active" onclick="switchTab('dashboard')">今日训练</button>
       <button class="nav-btn" onclick="switchTab('library')">专业动作库</button>
       <button class="nav-btn" onclick="switchTab('study')">教培知识库</button>
-      <button class="nav-btn" onclick="switchTab('logs')">训练与复盘日志</button>
+      <button class="nav-btn" onclick="switchTab('logs')">复盘与日志</button>
     </nav>
   </header>
 
   <main class="container">
     <section id="dashboard" class="tab-content active">
       <div class="welcome-card">
-        <h2>👋 选择你今天的练习模式</h2>
-        <p>根据今天的时间和场地安排，定制你的训练与学习策略：</p>
-        
+        <h2>👋 选择今日模式与定制任务</h2>
         <div class="mode-selector">
-          <button class="mode-btn active" id="btn-mode-home" onclick="setMode('home')">
-            🏠 工作日·居家 (30 Min)
-          </button>
-          <button class="mode-btn" id="btn-mode-studio" onclick="setMode('studio')">
-            🧘‍♀️ 工作日·馆课 (1-2 节)
-          </button>
-          <button class="mode-btn" id="btn-mode-weekend" onclick="setMode('weekend')">
-            ⏳ 周末·深度研习 (90+ Min)
-          </button>
+          <button class="mode-btn active" id="btn-mode-home" onclick="setMode('home')">🏠 工作日·居家 (30Min)</button>
+          <button class="mode-btn" id="btn-mode-studio" onclick="setMode('studio')">🧘‍♀️ 工作日·馆课 (1-2节)</button>
+          <button class="mode-btn" id="btn-mode-weekend" onclick="setMode('weekend')">⏳ 周末·深度研习 (90+Min)</button>
         </div>
       </div>
 
       <div class="card">
         <h3 id="mode-title">📋 模式清单</h3>
         <p class="subtitle" id="mode-desc"></p>
-        <ul class="task-list" id="task-list">
-          </ul>
+        
+        <div class="add-task-box">
+          <input type="text" id="new-task-input" placeholder="➕ 添加你今天的自定义训练任务/动作...">
+          <button onclick="addCustomTask()" class="small-btn">添加</button>
+        </div>
+
+        <ul class="task-list" id="task-list"></ul>
       </div>
 
       <div class="stats-grid">
@@ -49,43 +46,79 @@
           <p class="stat-num" id="today-progress">0/0</p>
         </div>
         <div class="stat-card">
-          <h3>累计记录/复盘</h3>
-          <p class="stat-num" id="total-logs-count">0 次</p>
+          <h3>累计复盘日志</h3>
+          <p class="stat-num" id="total-logs-count">0 篇</p>
         </div>
       </div>
     </section>
 
     <section id="library" class="tab-content">
       <h2>📖 普拉提专业动作库 (备课/解剖)</h2>
-      <p class="subtitle">积累教学口令与解剖重点，为兼职教学打基础。</p>
-      <div class="grid-list" id="library-list">
-        </div>
+      <p class="subtitle">积累教学口令 (Cueing) 与解剖重点，支持随时新增自己的动作卡片。</p>
+
+      <div class="card add-action-card">
+        <h3>➕ 添加新动作到动作库</h3>
+        <form onsubmit="addNewExercise(event)">
+          <div class="form-group-row">
+            <div class="form-group">
+              <label>动作名称：</label>
+              <input type="text" id="ex-name" placeholder="例：改革者脚踏系列 (Footwork)" required>
+            </div>
+            <div class="form-group">
+              <label>器械类别：</label>
+              <select id="ex-category">
+                <option value="垫上 (Mat)">垫上 (Mat)</option>
+                <option value="普拉提床 (Reformer)">普拉提床 (Reformer)</option>
+                <option value="凯迪拉克 (Cadillac)">凯迪拉克 (Cadillac)</option>
+                <option value="稳踏椅 (Wunda Chair)">稳踏椅 (Wunda Chair)</option>
+                <option value="脊柱纠正器 (Arc/Barrel)">脊柱纠正器 (Arc/Barrel)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>目标肌群 / 解剖重点：</label>
+            <input type="text" id="ex-muscle" placeholder="例：腘绳肌、臀大肌、骨盆中立位控制" required>
+          </div>
+          <div class="form-group">
+            <label>教练引导口令 (Cueing)：</label>
+            <textarea id="ex-cueing" rows="2" placeholder="例：想象双脚踩在弹簧上，推出去时保持脊柱延伸，不要塌腰..." required></textarea>
+          </div>
+          <button type="submit" class="primary-btn">保存新动作</button>
+        </form>
+      </div>
+
+      <div class="grid-list" id="library-list"></div>
     </section>
 
     <section id="study" class="tab-content">
-      <h2>📚 普拉提兼职/教培进阶资料</h2>
+      <h2>📚 普拉提兼职/教培进阶知识库</h2>
+      <p class="subtitle">精选解剖学、带课技巧与优质视频学习资源：</p>
+      
       <div class="study-grid">
         <div class="card">
-          <h3>🦴 人体解剖与生物力学</h3>
+          <h3>🦴 1. 解剖学与体态评估 (Anatomy & Posture)</h3>
           <div class="links-grid">
-            <a href="https://www.google.com" target="_blank" class="resource-link">📖 骨盆与脊柱中立位评估要点</a>
-            <a href="https://www.google.com" target="_blank" class="resource-link">🎥 核心肌群（腹横肌/盆底肌）激活解剖动画</a>
+            <a href="https://search.bilibili.com/all?keyword=%E6%99%AE%E2%81%B7%E6%8F%90%E8%A7%A3%E5%89%96%E5%AD%A63D" target="_blank" class="resource-link">📺 B站 3D解剖教学：骨盆中立位与脊柱活动度</a>
+            <a href="https://search.bilibili.com/all?keyword=%E8%85%B9%E6%A8%AA%E肌%E6%BF%80%E6%B4%BB" target="_blank" class="resource-link">🎬 核心深层肌群（腹横肌/盆底肌）激活讲解</a>
+            <a href="https://www.google.com/search?q=Pilates+Anatomy+posture+assessment" target="_blank" class="resource-link">🔍 常见代偿动作分析与骨骼受力拆解</a>
           </div>
         </div>
 
         <div class="card">
-          <h3>📋 编排逻辑与授课技巧 (Sequencing)</h3>
+          <h3>📋 2. 课程编排与授课逻辑 (Sequencing & Teaching)</h3>
           <div class="links-grid">
-            <a href="https://www.google.com" target="_blank" class="resource-link">📄 普拉提大器械（Reformer）课程编排模板</a>
-            <a href="https://www.google.com" target="_blank" class="resource-link">💡 常见代偿动作纠正与安全退阶方案</a>
+            <a href="https://search.bilibili.com/all?keyword=%E6%99%AE%E拉%E6%8F%90Reformer%E5%BA%8F%E5%88%97" target="_blank" class="resource-link">📄 Reformer 大器械 45分钟小班课编排思路</a>
+            <a href="https://search.bilibili.com/all?keyword=%E6%99%AE%E拉%E6%8F%90%E5%B8%A6%E8%AF%BE%E5%8F%A3%E4%BB%A4" target="_blank" class="resource-link">💡 教练口令 Cueing 技巧：如何让学员精准发力</a>
+            <a href="https://www.youtube.com/results?search_query=Pilates+instructor+cueing+tips" target="_blank" class="resource-link">🌐 YouTube 海外优秀教练授课口令与节奏示范</a>
           </div>
         </div>
 
         <div class="card">
-          <h3>🎬 优秀教练带课视频学习</h3>
+          <h3>🎬 3. 推荐学习频道与国际认证</h3>
           <div class="links-grid">
-            <a href="https://www.youtube.com" target="_blank" class="resource-link">🎬 YouTube 经典垫上带课口令示范</a>
-            <a href="https://www.bilibili.com" target="_blank" class="resource-link">📺 B站小班课互动与节奏控制拆解</a>
+            <a href="https://www.youtube.com/@MoveWithNicole" target="_blank" class="resource-link">🎥 Move With Nicole (经典垫上与小器械参考)</a>
+            <a href="https://www.youtube.com/@PilatesAnytimeTV" target="_blank" class="resource-link">🎥 Pilates Anytime (专业教练备课库)</a>
+            <a href="https://natp.memberclicks.net/" target="_blank" class="resource-link">🎓 NPCP (原 PMA) 国际普拉提认证官方指南</a>
           </div>
         </div>
       </div>
@@ -114,16 +147,15 @@
             <input type="number" id="log-duration" min="1" placeholder="例如：60" required>
           </div>
           <div class="form-group">
-            <label for="log-note">心得 / 启发 / 教练带课口令笔记：</label>
-            <textarea id="log-note" rows="4" placeholder="例如：今天馆课教练在讲解百次呼吸时用的比喻很好；或者记下自己的发力代偿问题..." required></textarea>
+            <label for="log-note">心得 / 启发 / 带课口令笔记：</label>
+            <textarea id="log-note" rows="4" placeholder="例如：记下今天馆课教练用的比喻，或者自己感觉代偿的地方..." required></textarea>
           </div>
           <button type="submit" class="primary-btn">保存复盘笔记</button>
         </form>
       </div>
 
-      <h3>📅 历史日志</h3>
-      <div class="log-history" id="log-history">
-        </div>
+      <h3>📅 历史日志记录</h3>
+      <div class="log-history" id="log-history"></div>
     </section>
   </main>
 
