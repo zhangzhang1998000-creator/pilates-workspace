@@ -5,6 +5,7 @@ const ASSETS_TO_CACHE = [
   '/style.css',
   '/script.js',
   '/manifest.json'
+  '/icon.png'
 ];
 
 // 安装 Service Worker 并缓存静态文件
