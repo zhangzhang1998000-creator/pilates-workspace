@@ -263,12 +263,12 @@ body {
   color: var(--primary-color);
   text-decoration: none;
   padding: 10px;
-  background: #f0f5f1;
+  background: #e9f5ff;
   border-radius: 6px;
   font-size: 0.9rem;
 }
 
-.resource-link:hover { background: #e1ede3; }
+.resource-link:hover { background: #e9f6ff; }
 
 .log-item {
   background: var(--card-bg);
