@@ -1,9 +1,9 @@
 :root {
-  --primary-color: #4a7c59;
-  --primary-hover: #3b6346;
-  --bg-color: #f4f6f3;
+  --primary-color: #355820;
+  --primary-hover: #355820;
+  --bg-color: #fff8ee;
   --card-bg: #ffffff;
-  --text-color: #2b3a2f;
+  --text-color: #661220;
   --border-radius: 12px;
   --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
