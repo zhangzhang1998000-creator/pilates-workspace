@@ -4,9 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pilates Workspace | 普拉提教练全能工作台</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4a7c59">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="普拉提">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2647/2647348.png">
+
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<script src="script.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('Service Worker 注册成功:', reg))
+          .catch(err => console.log('Service Worker 注册失败:', err));
+      });
+    }
+  </script>
+</body>
   <header class="navbar">
     <div class="logo">🧘‍♀️ Pilates Pro Workspace</div>
     <nav class="nav-links">
