@@ -1,1 +1,21 @@
-
+{
+  "name": "普拉提工作台",
+  "short_name": "普拉提",
+  "description": "个人普拉提学习与兼职备课工作台",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f6f3",
+  "theme_color": "#4a7c59",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2647/2647348.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2647/2647348.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
