@@ -1,4 +1,4 @@
-// 🏠 居家备选动作池
+// 🏠 居家备选动作池 (随机 4 项)
 const homeExercisePool = [
   "胸椎放松与呼吸激活 (Breathing) - 5min",
   "猫牛式伸展与脊柱逐节动员 - 5min",
@@ -13,12 +13,33 @@ const homeExercisePool = [
   "侧卧腿部系列 (Side Kick Series) 臀中肌 - 10min",
   "桥式 (Shoulder Bridge) 臀大肌与腘绳肌 - 8min",
   "支撑板 (Plank) 核心稳定性训练 - 5min",
-  "美人鱼拉伸 (Mermaid Stretch) 侧链放松 - 5min"
+  "美人鱼拉伸 (Mermaid Stretch) 侧链放松 - 5min",
+  "空中剪刀 (Scissors) 腿后侧拉伸 - 8min",
+  "仰卧侧摆腿 (Corkscrew) 腹斜肌控制 - 6min"
+];
+
+// ⏳ 周末深度研习专题池 (随机 4 项)
+const weekendTopicPool = [
+  "完整垫上普拉提高级序列练习 (45min)",
+  "选定 1 个经典动作做解剖与骨骼力学拆解 (20min)",
+  "模拟带课口令演练 (面向镜子或录音) (15min)",
+  "更新自己的动作库/备课笔记 (10min)",
+  "骨盆前倾/后倾/倾斜的体态评估与纠正动作编排 (30min)",
+  "Reformer 普拉提床核心弹簧阻力与安全导引复习 (25min)",
+  "肩颈代偿（耸肩/头前倾）的触觉辅助与口令引导练习 (20min)",
+  "孕产妇/产后修复普拉提禁忌动作与安全替换方案拆解 (30min)",
+  "小工具（普拉提圈/弹力带/大球）结合垫上动作编排 (25min)",
+  "观摩优秀教练授课视频，记录 3 个触动极强的 Cueing 口令 (20min)"
 ];
 
 function generateRandomHomeTasks() {
   const shuffled = [...homeExercisePool].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, 4).map((text, index) => ({ id: `home_rand_${index}`, text, completed: false }));
+}
+
+function generateRandomWeekendTasks() {
+  const shuffled = [...weekendTopicPool].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, 4).map((text, index) => ({ id: `weekend_rand_${index}`, text, completed: false }));
 }
 
 const modeConfigs = {
@@ -33,19 +54,10 @@ const modeConfigs = {
       { id: "s4", text: "记录今天发力代偿的动作（课后查阅解剖）", completed: false }
     ]
   },
-  weekend: {
-    title: "⏳ 周末·深度研习与备课模式 (90+分钟)",
-    desc: "时间充裕，进行完整训练与动作细节拆解。",
-    tasks: [
-      { id: "w1", text: "完整垫上普拉提高级序列练习 (45min)", completed: false },
-      { id: "w2", text: "选定 1 个经典动作做解剖与骨骼力学拆解 (20min)", completed: false },
-      { id: "w3", text: "模拟带课口令演练 (面向镜子或录音) (15min)", completed: false },
-      { id: "w4", text: "更新自己的动作库/备课笔记 (10min)", completed: false }
-    ]
-  }
+  weekend: { title: "⏳ 周末·深度研习与备课模式 (90+分钟)", desc: "每周/每日自动从进阶专题池抽取 4 项研习备课课题。" }
 };
 
-// 内置带国内 B站 视频示范的经典动作库
+// 丰富版动作库（内置视频示范）
 const defaultExercises = [
   { 
     name: "百次呼吸 (The Hundred)", 
@@ -67,6 +79,27 @@ const defaultExercises = [
     muscle: "股四头肌、腘绳肌、足弓力量", 
     link: "https://search.bilibili.com/all?keyword=Reformer+Footwork+%E6%8F%89%E7%BF%BB", 
     cueing: "“脚掌踩稳脚踏板，用腹部控制推床与收床的节奏，不要撞击滑轨。”" 
+  },
+  { 
+    name: "大象式 (Elephant)", 
+    category: "普拉提床 (Reformer)", 
+    muscle: "腘绳肌拉伸、腹肌收缩、肩膀稳定性", 
+    link: "https://search.bilibili.com/all?keyword=Reformer+Elephant+%E5%A4%A7%E8%B1%A1%E5%BC%8F", 
+    cueing: "“脚跟踩实脚踏，想象用腹肌拉动滑板向前，保持下背部微拱。”" 
+  },
+  { 
+    name: "下压横杠 (Push Through)", 
+    category: "凯迪拉克 (Cadillac)", 
+    muscle: "背阔肌、肩胛稳定性、核心", 
+    link: "https://search.bilibili.com/all?keyword=Cadillac+Push+Through", 
+    cueing: "“下压横杠时保持腋下收紧，不要用手腕死拉，想象用背部发力。”" 
+  },
+  { 
+    name: "美人鱼拉伸 (Mermaid)", 
+    category: "稳踏椅 (Wunda Chair)", 
+    muscle: "侧链拉伸、腰方肌、肋间肌", 
+    link: "https://search.bilibili.com/all?keyword=Wunda+Chair+Mermaid", 
+    cueing: "“坐骨紧贴坐垫，侧弯时保持双肩下沉，感受肋骨间隙被拉开。”" 
   }
 ];
 
@@ -76,25 +109,23 @@ let currentMode = localStorage.getItem('pilates_mode') || 'home';
 let lastSavedDate = localStorage.getItem('pilates_last_date');
 const todayStr = getTodayDateStr();
 
-// 每日自动重置与跨天生成新随机居家任务
+// 每日自动刷新
 if (lastSavedDate !== todayStr) {
   localStorage.setItem('pilates_tasks_home', JSON.stringify(generateRandomHomeTasks()));
-  ['studio', 'weekend'].forEach(mode => {
-    let tasks = JSON.parse(localStorage.getItem(`pilates_tasks_${mode}`)) || modeConfigs[mode].tasks;
-    if (tasks) localStorage.setItem(`pilates_tasks_${mode}`, JSON.stringify(tasks.map(t => ({ ...t, completed: false }))));
-  });
+  localStorage.setItem('pilates_tasks_weekend', JSON.stringify(generateRandomWeekendTasks()));
+  
+  let studioTasks = JSON.parse(localStorage.getItem('pilates_tasks_studio')) || modeConfigs.studio.tasks;
+  if (studioTasks) localStorage.setItem('pilates_tasks_studio', JSON.stringify(studioTasks.map(t => ({ ...t, completed: false }))));
+  
   localStorage.setItem('pilates_last_date', todayStr);
 }
 
 let userTasks = JSON.parse(localStorage.getItem(`pilates_tasks_${currentMode}`));
-if (!userTasks && currentMode === 'home') {
-  userTasks = generateRandomHomeTasks();
-  localStorage.setItem('pilates_tasks_home', JSON.stringify(userTasks));
-} else if (!userTasks) {
-  userTasks = modeConfigs[currentMode].tasks;
-}
+if (!userTasks && currentMode === 'home') userTasks = generateRandomHomeTasks();
+if (!userTasks && currentMode === 'weekend') userTasks = generateRandomWeekendTasks();
+if (!userTasks && currentMode === 'studio') userTasks = modeConfigs.studio.tasks;
 
-let exerciseLibrary = JSON.parse(localStorage.getItem('pilates_exercises_v4')) || defaultExercises;
+let exerciseLibrary = JSON.parse(localStorage.getItem('pilates_exercises_v5')) || defaultExercises;
 let logs = JSON.parse(localStorage.getItem('pilates_logs')) || [];
 
 let calYear = new Date().getFullYear();
@@ -127,6 +158,7 @@ function setMode(modeKey, isUserClick = true) {
 
   userTasks = JSON.parse(localStorage.getItem(`pilates_tasks_${modeKey}`));
   if (!userTasks && modeKey === 'home') userTasks = generateRandomHomeTasks();
+  if (!userTasks && modeKey === 'weekend') userTasks = generateRandomWeekendTasks();
 
   document.getElementById('mode-title').innerText = modeConfigs[modeKey].title;
   document.getElementById('mode-desc').innerText = modeConfigs[modeKey].desc;
@@ -178,6 +210,7 @@ function saveDailyProgress() {
   renderCalendar();
 }
 
+// 🗓️ 日历渲染与补打卡功能
 function renderCalendar() {
   const grid = document.getElementById('calendar-grid');
   grid.innerHTML = '';
@@ -220,6 +253,7 @@ function changeMonth(delta) {
   renderCalendar();
 }
 
+// 查看历史与补打卡弹窗
 function showDayDetail(dateStr) {
   const detailCard = document.getElementById('day-detail-card');
   const detailContent = document.getElementById('detail-content');
@@ -238,18 +272,41 @@ function showDayDetail(dateStr) {
     });
     html += `</ul>`;
   } else {
-    html += `<p style="color:#888; margin-top:8px;">当天无任务完成打卡。</p>`;
+    html += `<p style="color:#888; margin-top:8px;">当天未打卡。</p>`;
+    html += `<button class="small-btn" style="margin-top:8px;" onclick="makeUpCheckin('${dateStr}')">➕ 补打那天卡 (自动完成模式打卡)</button><br>`;
   }
 
   if (dayLogs.length > 0) {
-    html += `<h5 style="margin-top:10px;">📝 关联复盘日志：</h5>`;
+    html += `<h5 style="margin-top:12px;">📝 关联复盘日志：</h5>`;
     dayLogs.forEach(l => {
       html += `<p style="margin-top:4px;">• [${l.type}] ${l.note} (${l.duration}分钟)</p>`;
       if (l.img) html += `<img src="${l.img}" class="img-preview"><br>`;
     });
+  } else {
+    html += `<button class="small-btn" style="margin-top:8px; background:#6895e9;" onclick="jumpToLogWithDate('${dateStr}')">📝 补写那天复盘日志</button>`;
   }
 
   detailContent.innerHTML = html;
+}
+
+// 补打卡逻辑
+function makeUpCheckin(dateStr) {
+  let records = JSON.parse(localStorage.getItem('pilates_daily_records')) || {};
+  records[dateStr] = {
+    mode: "补打卡·自主训练",
+    tasks: [{ id: "makeup_1", text: "补打卡：完成普拉提自主练习与备课", completed: true }]
+  };
+  localStorage.setItem('pilates_daily_records', JSON.stringify(records));
+  renderCalendar();
+  showDayDetail(dateStr);
+  alert(`🎉 成功补打 ${dateStr} 的打卡！`);
+}
+
+// 补日志跳转逻辑
+function jumpToLogWithDate(dateStr) {
+  switchTab('logs');
+  document.getElementById('log-date').value = dateStr;
+  window.scrollTo({ top: document.getElementById('log-form').offsetTop - 80, behavior: 'smooth' });
 }
 
 function getBase64(file) {
@@ -297,7 +354,7 @@ async function addNewExercise(e) {
   }
 
   exerciseLibrary.unshift({ name, category, muscle, link, cueing, img });
-  localStorage.setItem('pilates_exercises_v4', JSON.stringify(exerciseLibrary));
+  localStorage.setItem('pilates_exercises_v5', JSON.stringify(exerciseLibrary));
   renderLibrary();
 
   document.getElementById('ex-name').value = '';
