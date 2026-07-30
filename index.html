@@ -81,7 +81,7 @@
 
     <section id="calendar" class="tab-content">
       <h2>📅 锻炼打卡与历史回顾</h2>
-      <p class="subtitle">点击日历上有标记的日期，可直接查看那天具体的训练内容与图片笔记。</p>
+      <p class="subtitle">👉 点击日历上的<strong>任意日期</strong>均可查看详情或进行<strong>补打卡</strong>。</p>
       
       <div class="card calendar-card">
         <div class="calendar-header">
@@ -95,9 +95,9 @@
         <div class="calendar-grid" id="calendar-grid"></div>
       </div>
 
-      <div class="card" id="day-detail-card" style="display: none;">
-        <h3 id="detail-date-title">📅 历史记录详情</h3>
-        <div id="detail-content"></div>
+      <div class="card" id="day-detail-card" style="display: none; margin-top: 20px;">
+        <h3 id="detail-date-title">📅 历史记录与补打卡</h3>
+        <div id="detail-content" style="margin-top: 10px;"></div>
       </div>
     </section>
 
@@ -222,26 +222,15 @@
   </main>
 
   <script>
-    // 基础数据与初始化
     let currentMode = 'home';
     let tasks = [];
     let logs = JSON.parse(localStorage.getItem('pilates_logs') || '[]');
     let customExerciseLib = JSON.parse(localStorage.getItem('pilates_custom_lib') || '[]');
     
-    // 预设模式数据
     const modeConfigs = {
-      home: {
-        title: "🏠 工作日·居家模式 (随机挑选4项)",
-        desc: "适合居家无器械或小器械（如瑜伽垫、弹力带）的高效练习。"
-      },
-      studio: {
-        title: "🧘‍♀️ 工作日·馆课观察与实践模式",
-        desc: "适合在普拉提馆跟课、观摩教练口令及进行实操的复盘练习。"
-      },
-      weekend: {
-        title: "⏳ 周末·深度研习模式",
-        desc: "针对解剖细节、动作原理和编排逻辑进行深度拆解与总结。"
-      }
+      home: { title: "🏠 工作日·居家模式 (随机挑选4项)", desc: "适合居家无器械或小器械的高效练习。" },
+      studio: { title: "🧘‍♀️ 工作日·馆课观察与实践模式", desc: "适合在普拉提馆跟课、观摩教练口令及实操复盘。" },
+      weekend: { title: "⏳ 周末·深度研习模式", desc: "针对解剖细节、动作原理和编排逻辑进行深度拆解。" }
     };
 
     const homeTaskPool = [
@@ -255,9 +244,7 @@
       "天鹅展翅 - 脊柱后伸 (8次)"
     ];
 
-    // 初始化运行
     window.onload = function() {
-      // 初始化日期输入框默认值为今天
       const today = new Date().toISOString().split('T')[0];
       const logDateInput = document.getElementById('log-date');
       if (logDateInput) logDateInput.value = today;
@@ -268,7 +255,6 @@
       renderLogs();
     };
 
-    // Tab 切换逻辑
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -282,7 +268,6 @@
       if (activeBtn) activeBtn.classList.add('active');
     }
 
-    // 模式选择逻辑
     function setMode(mode) {
       currentMode = mode;
       document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
@@ -311,7 +296,6 @@
       renderTasks();
     }
 
-    // 任务清单逻辑
     function renderTasks() {
       const list = document.getElementById('task-list');
       list.innerHTML = '';
@@ -346,7 +330,7 @@
       }
     }
 
-    // 计时器逻辑
+    // ⏱️ 计时器逻辑
     let timerSeconds = 0;
     let timerInterval = null;
     let isTimerRunning = false;
@@ -397,7 +381,7 @@
       updateTimerDisplay();
     }
 
-    // 打卡日历逻辑
+    // 🗓️ 包含【补卡】逻辑的日历
     let calDate = new Date();
 
     function renderCalendar() {
@@ -429,9 +413,10 @@
         if (hasLog) {
           cell.classList.add('has-checkin');
           checkinDays++;
-          cell.onclick = () => showDayDetail(dateStr);
         }
 
+        // 所有日期都可以点击进行查看或补卡
+        cell.onclick = () => showDayDetail(dateStr);
         grid.appendChild(cell);
       }
 
@@ -443,24 +428,68 @@
       renderCalendar();
     }
 
+    // 展开历史记录与补卡窗口
     function showDayDetail(dateStr) {
       const dayLogs = logs.filter(log => log.date === dateStr);
       const card = document.getElementById('day-detail-card');
       const content = document.getElementById('detail-content');
 
-      document.getElementById('detail-date-title').innerText = `📅 ${dateStr} 训练记录`;
-      content.innerHTML = dayLogs.map(l => `
-        <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
-          <p><strong>类型：</strong> ${l.type} (${l.duration} 分钟)</p>
-          <p><strong>内容：</strong> ${l.note}</p>
-          ${l.img ? `<img src="${l.img}" class="img-preview">` : ''}
-        </div>
-      `).join('');
+      document.getElementById('detail-date-title').innerText = `📅 ${dateStr} 记录与补卡`;
 
+      let html = '';
+      if (dayLogs.length > 0) {
+        html += dayLogs.map(l => `
+          <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
+            <p><strong>类型：</strong> ${l.type} (${l.duration} 分钟)</p>
+            <p><strong>心得：</strong> ${l.note}</p>
+            ${l.img ? `<img src="${l.img}" class="img-preview">` : ''}
+          </div>
+        `).join('');
+      } else {
+        html += `<p style="color: #777; margin-bottom: 12px;">该日期暂无打卡记录。</p>`;
+      }
+
+      // 快速补卡输入区域
+      html += `
+        <div style="margin-top: 15px; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px dashed #6895e9;">
+          <h4 style="margin-bottom: 10px; color: var(--primary-color);">➕ 为 ${dateStr} 补打卡</h4>
+          <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+            <select id="quick-log-type" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc;">
+              <option value="居家自主">居家自主</option>
+              <option value="馆课体验/观察">馆课体验/观察</option>
+              <option value="备课记录">备课记录</option>
+            </select>
+            <input type="number" id="quick-log-duration" placeholder="时长(分钟)" value="30" style="width: 110px; padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc;">
+          </div>
+          <textarea id="quick-log-note" rows="2" placeholder="输入本次补打卡的训练内容或心得..." style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 10px; box-sizing: border-box;"></textarea>
+          <button class="small-btn" onclick="quickCheckin('${dateStr}')">提交补卡</button>
+        </div>
+      `;
+
+      content.innerHTML = html;
       card.style.display = 'block';
     }
 
-    // 动作库与日志逻辑
+    // 提交补卡处理
+    function quickCheckin(dateStr) {
+      const type = document.getElementById('quick-log-type').value;
+      const duration = document.getElementById('quick-log-duration').value || 30;
+      const note = document.getElementById('quick-log-note').value.trim();
+
+      if (!note) {
+        alert('请先填写打卡心得/训练内容！');
+        return;
+      }
+
+      logs.unshift({ date: dateStr, type, duration, note, img: '' });
+      localStorage.setItem('pilates_logs', JSON.stringify(logs));
+      
+      renderCalendar();
+      renderLogs();
+      showDayDetail(dateStr);
+      alert(`✅ ${dateStr} 补打卡成功！`);
+    }
+
     function addNewExercise(e) {
       e.preventDefault();
       const name = document.getElementById('ex-name').value;
