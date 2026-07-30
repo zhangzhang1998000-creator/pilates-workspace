@@ -22,6 +22,7 @@ const homeExercisePool = [
 const weekendTopicPool = [
   "完整垫上普拉提高级序列练习 (45min)",
   "选定 1 个经典动作做解剖与骨骼力学拆解 (20min)",
+  "常见代偿动作分析与骨骼受力拆解研习 (25min)",
   "模拟带课口令演练 (面向镜子或录音) (15min)",
   "更新自己的动作库/备课笔记 (10min)",
   "骨盆前倾/后倾/倾斜的体态评估与纠正动作编排 (30min)",
@@ -127,6 +128,7 @@ if (!userTasks && currentMode === 'studio') userTasks = modeConfigs.studio.tasks
 
 let exerciseLibrary = JSON.parse(localStorage.getItem('pilates_exercises_v5')) || defaultExercises;
 let logs = JSON.parse(localStorage.getItem('pilates_logs')) || [];
+let currentCategoryFilter = 'ALL';
 
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
@@ -137,14 +139,21 @@ document.addEventListener("DOMContentLoaded", () => {
   renderLogs();
   renderCalendar();
   updateStats();
-  document.getElementById('log-date').value = todayStr;
+  const dateInput = document.getElementById('log-date');
+  if (dateInput) dateInput.value = todayStr;
 });
 
+// 🛠️ 修复了这里的 event 隐式报错问题
 function switchTab(tabId) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-  document.getElementById(tabId).classList.add('active');
-  event.target.classList.add('active');
+  
+  const targetTab = document.getElementById(tabId);
+  if (targetTab) targetTab.classList.add('active');
+
+  if (window.event && window.event.target) {
+    window.event.target.classList.add('active');
+  }
   if (tabId === 'calendar') renderCalendar();
 }
 
@@ -159,9 +168,12 @@ function setMode(modeKey, isUserClick = true) {
   userTasks = JSON.parse(localStorage.getItem(`pilates_tasks_${modeKey}`));
   if (!userTasks && modeKey === 'home') userTasks = generateRandomHomeTasks();
   if (!userTasks && modeKey === 'weekend') userTasks = generateRandomWeekendTasks();
+  if (!userTasks && modeKey === 'studio') userTasks = modeConfigs.studio.tasks;
 
-  document.getElementById('mode-title').innerText = modeConfigs[modeKey].title;
-  document.getElementById('mode-desc').innerText = modeConfigs[modeKey].desc;
+  const titleEl = document.getElementById('mode-title');
+  const descEl = document.getElementById('mode-desc');
+  if (titleEl) titleEl.innerText = modeConfigs[modeKey].title;
+  if (descEl) descEl.innerText = modeConfigs[modeKey].desc;
   
   renderTasks();
   updateStats();
@@ -169,8 +181,9 @@ function setMode(modeKey, isUserClick = true) {
 
 function renderTasks() {
   const taskList = document.getElementById('task-list');
+  if (!taskList) return;
   taskList.innerHTML = '';
-  userTasks.forEach(task => {
+  (userTasks || []).forEach(task => {
     const li = document.createElement('li');
     li.className = `task-item ${task.completed ? 'completed' : ''}`;
     li.innerHTML = `
@@ -183,6 +196,7 @@ function renderTasks() {
 
 function addCustomTask() {
   const input = document.getElementById('new-task-input');
+  if (!input) return;
   const text = input.value.trim();
   if (!text) return;
   userTasks.push({ id: 'custom_' + Date.now(), text, completed: false });
@@ -213,9 +227,11 @@ function saveDailyProgress() {
 // 🗓️ 日历渲染与补打卡功能
 function renderCalendar() {
   const grid = document.getElementById('calendar-grid');
+  if (!grid) return;
   grid.innerHTML = '';
   
-  document.getElementById('calendar-month-year').innerText = `${calYear} 年 ${calMonth + 1} 月`;
+  const mTitle = document.getElementById('calendar-month-year');
+  if (mTitle) mTitle.innerText = `${calYear} 年 ${calMonth + 1} 月`;
 
   const firstDay = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
@@ -243,7 +259,8 @@ function renderCalendar() {
 
   const currentMonthPrefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
   const checkinDaysCount = Object.keys(records).filter(d => d.startsWith(currentMonthPrefix)).length;
-  document.getElementById('month-checkin-count').innerText = `${checkinDaysCount} 天`;
+  const countEl = document.getElementById('month-checkin-count');
+  if (countEl) countEl.innerText = `${checkinDaysCount} 天`;
 }
 
 function changeMonth(delta) {
@@ -257,6 +274,7 @@ function changeMonth(delta) {
 function showDayDetail(dateStr) {
   const detailCard = document.getElementById('day-detail-card');
   const detailContent = document.getElementById('detail-content');
+  if (!detailCard || !detailContent) return;
   detailCard.style.display = 'block';
 
   const records = JSON.parse(localStorage.getItem('pilates_daily_records')) || {};
@@ -305,8 +323,10 @@ function makeUpCheckin(dateStr) {
 // 补日志跳转逻辑
 function jumpToLogWithDate(dateStr) {
   switchTab('logs');
-  document.getElementById('log-date').value = dateStr;
-  window.scrollTo({ top: document.getElementById('log-form').offsetTop - 80, behavior: 'smooth' });
+  const dInput = document.getElementById('log-date');
+  if (dInput) dInput.value = dateStr;
+  const formEl = document.getElementById('log-form');
+  if (formEl) window.scrollTo({ top: formEl.offsetTop - 80, behavior: 'smooth' });
 }
 
 function getBase64(file) {
@@ -318,10 +338,30 @@ function getBase64(file) {
   });
 }
 
+// 🔍 渲染动作库（带搜索与筛选）
 function renderLibrary() {
   const libList = document.getElementById('library-list');
+  if (!libList) return;
   libList.innerHTML = '';
-  exerciseLibrary.forEach(item => {
+
+  const searchInput = document.getElementById('lib-search-input');
+  const searchText = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+  const filteredExercises = exerciseLibrary.filter(item => {
+    const matchCategory = (currentCategoryFilter === 'ALL') || (item.category === currentCategoryFilter);
+    const matchText = !searchText || 
+      (item.name && item.name.toLowerCase().includes(searchText)) ||
+      (item.muscle && item.muscle.toLowerCase().includes(searchText)) ||
+      (item.cueing && item.cueing.toLowerCase().includes(searchText));
+    return matchCategory && matchText;
+  });
+
+  if (filteredExercises.length === 0) {
+    libList.innerHTML = '<p style="color:#888; grid-column: 1/-1; text-align:center; padding: 20px;">🔍 没有找到符合条件的动作</p>';
+    return;
+  }
+
+  filteredExercises.forEach(item => {
     const div = document.createElement('div');
     div.className = 'action-card';
     let imgHtml = item.img ? `<img src="${item.img}" class="img-preview">` : '';
@@ -339,6 +379,18 @@ function renderLibrary() {
   });
 }
 
+function setCategoryFilter(category, btnEl) {
+  currentCategoryFilter = category;
+  const btns = document.querySelectorAll('#category-filter-btns .filter-btn');
+  btns.forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  renderLibrary();
+}
+
+function filterLibrary() {
+  renderLibrary();
+}
+
 async function addNewExercise(e) {
   e.preventDefault();
   const name = document.getElementById('ex-name').value;
@@ -349,7 +401,7 @@ async function addNewExercise(e) {
   const fileInput = document.getElementById('ex-image-input');
 
   let img = '';
-  if (fileInput.files.length > 0) {
+  if (fileInput && fileInput.files.length > 0) {
     img = await getBase64(fileInput.files[0]);
   }
 
@@ -361,7 +413,7 @@ async function addNewExercise(e) {
   document.getElementById('ex-muscle').value = '';
   document.getElementById('ex-link').value = '';
   document.getElementById('ex-cueing').value = '';
-  fileInput.value = '';
+  if (fileInput) fileInput.value = '';
   alert('🎉 动作保存成功！');
 }
 
@@ -374,7 +426,7 @@ async function addLog(e) {
   const fileInput = document.getElementById('log-image-input');
 
   let img = '';
-  if (fileInput.files.length > 0) {
+  if (fileInput && fileInput.files.length > 0) {
     img = await getBase64(fileInput.files[0]);
   }
 
@@ -387,12 +439,13 @@ async function addLog(e) {
 
   document.getElementById('log-duration').value = '';
   document.getElementById('log-note').value = '';
-  fileInput.value = '';
+  if (fileInput) fileInput.value = '';
   alert('🎉 日志保存成功！');
 }
 
 function renderLogs() {
   const history = document.getElementById('log-history');
+  if (!history) return;
   history.innerHTML = '';
   if (logs.length === 0) {
     history.innerHTML = '<p style="color:#888;">暂无日志，去记下今天的训练心得吧！</p>';
@@ -415,9 +468,11 @@ function renderLogs() {
 }
 
 function updateStats() {
-  const completedTasks = userTasks.filter(t => t.completed).length;
-  document.getElementById('today-progress').innerText = `${completedTasks} / ${userTasks.length}`;
+  const completedTasks = (userTasks || []).filter(t => t.completed).length;
+  const progressEl = document.getElementById('today-progress');
+  if (progressEl) progressEl.innerText = `${completedTasks} / ${(userTasks || []).length}`;
 }
+
 // ⏱️ 普拉提专注计时器逻辑
 let timerInterval = null;
 let timerSeconds = 0;
@@ -426,15 +481,18 @@ let isTimerRunning = false;
 function updateTimerDisplay() {
   const mins = Math.floor(timerSeconds / 60);
   const secs = timerSeconds % 60;
-  document.getElementById('timer-display').innerText = 
-    `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  const display = document.getElementById('timer-display');
+  if (display) {
+    display.innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
 }
 
 function setTimerPreset(seconds) {
   clearInterval(timerInterval);
   isTimerRunning = false;
   timerSeconds = seconds;
-  document.getElementById('timer-start-btn').innerText = '▶ 开始';
+  const btn = document.getElementById('timer-start-btn');
+  if (btn) btn.innerText = '▶ 开始';
   updateTimerDisplay();
 }
 
@@ -444,11 +502,11 @@ function toggleTimer() {
   if (isTimerRunning) {
     clearInterval(timerInterval);
     isTimerRunning = false;
-    btn.innerText = '▶ 继续';
+    if (btn) btn.innerText = '▶ 继续';
   } else {
     if (timerSeconds <= 0) return alert('请先选择或设置计时时间！');
     isTimerRunning = true;
-    btn.innerText = '⏸ 暂停';
+    if (btn) btn.innerText = '⏸ 暂停';
     
     timerInterval = setInterval(() => {
       timerSeconds--;
@@ -457,7 +515,7 @@ function toggleTimer() {
       if (timerSeconds <= 0) {
         clearInterval(timerInterval);
         isTimerRunning = false;
-        btn.innerText = '▶ 开始';
+        if (btn) btn.innerText = '▶ 开始';
         alert('🔔 训练时间到！辛苦啦！');
       }
     }, 1000);
@@ -468,6 +526,7 @@ function resetTimer() {
   clearInterval(timerInterval);
   isTimerRunning = false;
   timerSeconds = 0;
-  document.getElementById('timer-start-btn').innerText = '▶ 开始';
+  const btn = document.getElementById('timer-start-btn');
+  if (btn) btn.innerText = '▶ 开始';
   updateTimerDisplay();
 }
