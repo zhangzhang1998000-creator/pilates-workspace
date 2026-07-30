@@ -50,7 +50,16 @@
 
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="card timer-card" style="text-align: center; margin-top: 20px;">
+          <h3>今日清单进度</h3>
+          <p class="stat-num" id="today-progress">0/0</p>
+        </div>
+        <div class="stat-card">
+          <h3>本月已打卡天数</h3>
+          <p class="stat-num" id="month-checkin-count">0 天</p>
+        </div>
+      </div>
+
+      <div class="card timer-card" style="text-align: center; margin-top: 20px;">
         <h3>⏱️ 普拉提专注计时器</h3>
         <p class="subtitle">适用于动作 Hold 住（如 Plank 支撑）或分段训练计时</p>
         
@@ -66,14 +75,6 @@
         <div style="display: flex; gap: 10px; justify-content: center;">
           <button class="primary-btn" style="width: auto; padding: 8px 24px;" id="timer-start-btn" onclick="toggleTimer()">▶ 开始</button>
           <button class="toggle-btn" style="padding: 8px 16px;" onclick="resetTimer()">↺ 重置</button>
-        </div>
-      </div>
-          <h3>今日清单进度</h3>
-          <p class="stat-num" id="today-progress">0/0</p>
-        </div>
-        <div class="stat-card">
-          <h3>本月已打卡天数</h3>
-          <p class="stat-num" id="month-checkin-count">0 天</p>
         </div>
       </div>
     </section>
@@ -99,27 +100,23 @@
         <div id="detail-content"></div>
       </div>
     </section>
-<div class="card timer-card" style="text-align: center; margin-top: 20px;">
-        <h3>⏱️ 普拉提专注计时器</h3>
-        <p class="subtitle">适用于动作 Hold 住（如 Plank 支撑）或分段训练计时</p>
-        
-        <div style="font-size: 2.8rem; font-weight: bold; color: var(--primary-color); margin: 15px 0;" id="timer-display">00:00</div>
-        
-        <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap;">
-          <button class="small-btn" onclick="setTimerPreset(30)">30 秒</button>
-          <button class="small-btn" onclick="setTimerPreset(60)">60 秒</button>
-          <button class="small-btn" onclick="setTimerPreset(180)">3 分钟</button>
-          <button class="small-btn" onclick="setTimerPreset(300)">5 分钟</button>
-        </div>
 
-        <div style="display: flex; gap: 10px; justify-content: center;">
-          <button class="primary-btn" style="width: auto; padding: 8px 24px;" id="timer-start-btn" onclick="toggleTimer()">▶ 开始</button>
-          <button class="toggle-btn" style="padding: 8px 16px;" onclick="resetTimer()">↺ 重置</button>
-        </div>
-      </div>
     <section id="library" class="tab-content">
       <h2>📖 普拉提专业动作库</h2>
       <p class="subtitle">包含国内示范视频链接，支持自主拍照/图片上传。</p>
+
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="form-group" style="margin-bottom: 10px;">
+          <input type="text" id="lib-search-input" placeholder="🔍 输入动作名称、目标肌群或口令关键词搜索..." oninput="filterLibrary()">
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="category-filter-btns">
+          <button class="small-btn filter-btn active" onclick="setCategoryFilter('ALL', this)">全部</button>
+          <button class="small-btn filter-btn" onclick="setCategoryFilter('垫上 (Mat)', this)">垫上 (Mat)</button>
+          <button class="small-btn filter-btn" onclick="setCategoryFilter('普拉提床 (Reformer)', this)">普拉提床 (Reformer)</button>
+          <button class="small-btn filter-btn" onclick="setCategoryFilter('凯迪拉克 (Cadillac)', this)">凯迪拉克 (Cadillac)</button>
+          <button class="small-btn filter-btn" onclick="setCategoryFilter('稳踏椅 (Wunda Chair)', this)">稳踏椅 (Wunda Chair)</button>
+        </div>
+      </div>
 
       <div class="card add-action-card">
         <h3>➕ 添加新动作卡片</h3>
@@ -170,6 +167,7 @@
           <div class="links-grid">
             <a href="https://search.bilibili.com/all?keyword=%E6%99%AE%E2%81%B7%E6%8F%90%E8%A7%A3%E5%89%96%E5%AD%A63D" target="_blank" class="resource-link">📺 B站 3D解剖教学：骨盆中立位与脊柱活动度</a>
             <a href="https://search.bilibili.com/all?keyword=%E8%85%B9%E6%A8%AA%E肌%E6%BF%80%E6%B4%BB" target="_blank" class="resource-link">🎬 核心深层肌群（腹横肌/盆底肌）激活讲解</a>
+            <a href="https://search.bilibili.com/all?keyword=%E6%99%AE%E2%81%B7%E6%8F%90%E4%BB%A3%E5%81%BF%E5%8A%A8%E4%BD%9C%E5%88%86%E6%9E%90" target="_blank" class="resource-link">🔍 常见代偿动作分析与骨骼受力拆解</a>
           </div>
         </div>
         <div class="card">
@@ -196,38 +194,3 @@
               <select id="log-type">
                 <option value="居家自主">居家自主</option>
                 <option value="馆课体验/观察">馆课体验/观察</option>
-                <option value="备课演练">备课演练</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="log-duration">时长（分钟）：</label>
-            <input type="number" id="log-duration" min="1" placeholder="例如：60" required>
-          </div>
-          <div class="form-group">
-            <label>上传训练照片/备课板书：</label>
-            <input type="file" id="log-image-input" accept="image/*">
-          </div>
-          <div class="form-group">
-            <label for="log-note">心得 / 启发 / 带课口令笔记：</label>
-            <textarea id="log-note" rows="4" placeholder="例如：记下今天馆课教练用的比喻，或者自己感觉代偿的地方..." required></textarea>
-          </div>
-          <button type="submit" class="primary-btn">保存复盘笔记</button>
-        </form>
-      </div>
-
-      <h3>📅 历史日志记录</h3>
-      <div class="log-history" id="log-history"></div>
-    </section>
-  </main>
-
-  <script src="script.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(err => console.log(err));
-      });
-    }
-  </script>
-</body>
-</html>
