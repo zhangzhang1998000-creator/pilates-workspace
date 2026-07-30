@@ -156,7 +156,7 @@
         </form>
       </div>
 
-      <div class="grid-list" id="library-list"></div>
+      <div class="grid-list" id="library-list" style="margin-top: 20px;"></div>
     </section>
 
     <section id="study" class="tab-content">
@@ -165,16 +165,16 @@
         <div class="card">
           <h3>🦴 1. 解剖学与体态评估</h3>
           <div class="links-grid">
-            <a href="https://search.bilibili.com/all?keyword=%E6%99%AE%E2%81%B7%E6%8F%90%E8%A7%A3%E5%89%96%E5%AD%A63D" target="_blank" class="resource-link">📺 B站 3D解剖教学：骨盆中立位与脊柱活动度</a>
-            <a href="https://search.bilibili.com/all?keyword=%E8%85%B9%E6%A8%AA%E肌%E6%BF%80%E6%B4%BB" target="_blank" class="resource-link">🎬 核心深层肌群（腹横肌/盆底肌）激活讲解</a>
-            <a href="https://search.bilibili.com/all?keyword=%E6%99%AE%E2%81%B7%E6%8F%90%E4%BB%A3%E5%81%BF%E5%8A%A8%E4%BD%9C%E5%88%86%E6%9E%90" target="_blank" class="resource-link">🔍 常见代偿动作分析与骨骼受力拆解</a>
+            <a href="https://search.bilibili.com/all?keyword=普拉提解剖学3D" target="_blank" class="resource-link">📺 B站 3D解剖教学：骨盆中立位与脊柱活动度</a>
+            <a href="https://search.bilibili.com/all?keyword=腹横肌激活" target="_blank" class="resource-link">🎬 核心深层肌群（腹横肌/盆底肌）激活讲解</a>
+            <a href="https://search.bilibili.com/all?keyword=普拉提代偿动作分析" target="_blank" class="resource-link">🔍 常见代偿动作分析与骨骼受力拆解</a>
           </div>
         </div>
         <div class="card">
           <h3>📋 2. 课程编排与授课逻辑</h3>
           <div class="links-grid">
-            <a href="https://search.bilibili.com/all?keyword=%E6%99%AE%E拉%E6%8F%90Reformer%E5%BA%8F%E5%88%97" target="_blank" class="resource-link">📄 Reformer 大器械 45分钟小班课编排思路</a>
-            <a href="https://search.bilibili.com/all?keyword=%E6%99%AE%E拉%E6%8F%90%E5%B8%A6%E8%AF%BE%E5%8F%A3%E4%BB%A4" target="_blank" class="resource-link">💡 教练口令 Cueing 技巧：让学员精准发力</a>
+            <a href="https://search.bilibili.com/all?keyword=普拉提Reformer序列" target="_blank" class="resource-link">📄 Reformer 大器械 45分钟小班课编排思路</a>
+            <a href="https://search.bilibili.com/all?keyword=普拉提带课口令" target="_blank" class="resource-link">💡 教练口令 Cueing 技巧：让学员精准发力</a>
           </div>
         </div>
       </div>
@@ -194,3 +194,384 @@
               <select id="log-type">
                 <option value="居家自主">居家自主</option>
                 <option value="馆课体验/观察">馆课体验/观察</option>
+                <option value="备课记录">备课记录</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="log-duration">时长 (分钟)：</label>
+              <input type="number" id="log-duration" placeholder="45" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="log-note">心得/口令/感受记录：</label>
+            <textarea id="log-note" rows="3" placeholder="记录今天带课体验、感受或者发现的学员代偿情况..." required></textarea>
+          </div>
+          <div class="form-group">
+            <label>上传训练/备课照片：</label>
+            <input type="file" id="log-image-input" accept="image/*">
+          </div>
+          <button type="submit" class="primary-btn">保存复盘日志</button>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top: 20px;">
+        <h3>📜 历史日志列表</h3>
+        <div id="log-history" style="margin-top: 15px;"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // 基础数据与初始化
+    let currentMode = 'home';
+    let tasks = [];
+    let logs = JSON.parse(localStorage.getItem('pilates_logs') || '[]');
+    let customExerciseLib = JSON.parse(localStorage.getItem('pilates_custom_lib') || '[]');
+    
+    // 预设模式数据
+    const modeConfigs = {
+      home: {
+        title: "🏠 工作日·居家模式 (随机挑选4项)",
+        desc: "适合居家无器械或小器械（如瑜伽垫、弹力带）的高效练习。"
+      },
+      studio: {
+        title: "🧘‍♀️ 工作日·馆课观察与实践模式",
+        desc: "适合在普拉提馆跟课、观摩教练口令及进行实操的复盘练习。"
+      },
+      weekend: {
+        title: "⏳ 周末·深度研习模式",
+        desc: "针对解剖细节、动作原理和编排逻辑进行深度拆解与总结。"
+      }
+    };
+
+    const homeTaskPool = [
+      "胸椎放松与呼吸激活 (5min)",
+      "猫牛式与脊柱逐节动员 (5min)",
+      "死虫式腹横肌激活 (20次)",
+      "百次呼吸 (The Hundred) (100次)",
+      "单腿伸展与双腿伸展 (各10次)",
+      "臀桥核心稳定训练 (15次)",
+      "侧卧腿系列 - 臀中肌激活 (各15次)",
+      "天鹅展翅 - 脊柱后伸 (8次)"
+    ];
+
+    // 初始化运行
+    window.onload = function() {
+      // 初始化日期输入框默认值为今天
+      const today = new Date().toISOString().split('T')[0];
+      const logDateInput = document.getElementById('log-date');
+      if (logDateInput) logDateInput.value = today;
+
+      setMode('home');
+      renderCalendar();
+      renderLibrary();
+      renderLogs();
+    };
+
+    // Tab 切换逻辑
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+
+      const targetTab = document.getElementById(tabId);
+      if (targetTab) targetTab.classList.add('active');
+
+      const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(
+        btn => btn.getAttribute('onclick').includes(`'${tabId}'`)
+      );
+      if (activeBtn) activeBtn.classList.add('active');
+    }
+
+    // 模式选择逻辑
+    function setMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(`btn-mode-${mode}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      document.getElementById('mode-title').innerText = modeConfigs[mode].title;
+      document.getElementById('mode-desc').innerText = modeConfigs[mode].desc;
+
+      if (mode === 'home') {
+        const shuffled = [...homeTaskPool].sort(() => 0.5 - Math.random());
+        tasks = shuffled.slice(0, 4).map(text => ({ text, completed: false }));
+      } else if (mode === 'studio') {
+        tasks = [
+          { text: "记录上课教练的精妙 Cueing 口令 2 条", completed: false },
+          { text: "观察学员常见代偿部位及纠正手法", completed: false },
+          { text: "整理一个大器械 (Reformer) 组合动作", completed: false }
+        ];
+      } else {
+        tasks = [
+          { text: "研习 1 个难点动作的解剖与骨骼对齐", completed: false },
+          { text: "自行编排并录制一段 15 分钟的垫上/器械序列", completed: false },
+          { text: "撰写本周体态评估与复盘日志", completed: false }
+        ];
+      }
+      renderTasks();
+    }
+
+    // 任务清单逻辑
+    function renderTasks() {
+      const list = document.getElementById('task-list');
+      list.innerHTML = '';
+      let completedCount = 0;
+
+      tasks.forEach((task, idx) => {
+        if (task.completed) completedCount++;
+        const li = document.createElement('li');
+        li.className = `task-item ${task.completed ? 'completed' : ''}`;
+        li.innerHTML = `
+          <span>${task.text}</span>
+          <button class="toggle-btn" onclick="toggleTask(${idx})">${task.completed ? '✓ 已完成' : '未完成'}</button>
+        `;
+        list.appendChild(li);
+      });
+
+      document.getElementById('today-progress').innerText = `${completedCount}/${tasks.length}`;
+    }
+
+    function toggleTask(index) {
+      tasks[index].completed = !tasks[index].completed;
+      renderTasks();
+    }
+
+    function addCustomTask() {
+      const input = document.getElementById('new-task-input');
+      const val = input.value.trim();
+      if (val) {
+        tasks.push({ text: val, completed: false });
+        input.value = '';
+        renderTasks();
+      }
+    }
+
+    // 计时器逻辑
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let isTimerRunning = false;
+
+    function updateTimerDisplay() {
+      const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+      const secs = String(timerSeconds % 60).padStart(2, '0');
+      document.getElementById('timer-display').innerText = `${mins}:${secs}`;
+    }
+
+    function setTimerPreset(sec) {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      document.getElementById('timer-start-btn').innerText = '▶ 开始';
+      timerSeconds = sec;
+      updateTimerDisplay();
+    }
+
+    function toggleTimer() {
+      const btn = document.getElementById('timer-start-btn');
+      if (isTimerRunning) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        btn.innerText = '▶ 继续';
+      } else {
+        if (timerSeconds <= 0) return;
+        isTimerRunning = true;
+        btn.innerText = '❚❚ 暂停';
+        timerInterval = setInterval(() => {
+          if (timerSeconds > 0) {
+            timerSeconds--;
+            updateTimerDisplay();
+          } else {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            btn.innerText = '▶ 开始';
+            alert('⏱️ 计时结束！');
+          }
+        }, 1000);
+      }
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      timerSeconds = 0;
+      document.getElementById('timer-start-btn').innerText = '▶ 开始';
+      updateTimerDisplay();
+    }
+
+    // 打卡日历逻辑
+    let calDate = new Date();
+
+    function renderCalendar() {
+      const year = calDate.getFullYear();
+      const month = calDate.getMonth();
+      document.getElementById('calendar-month-year').innerText = `${year} 年 ${month + 1} 月`;
+
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'calendar-day empty';
+        grid.appendChild(emptyCell);
+      }
+
+      let checkinDays = 0;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day';
+        cell.innerText = d;
+
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const hasLog = logs.some(log => log.date === dateStr);
+
+        if (hasLog) {
+          cell.classList.add('has-checkin');
+          checkinDays++;
+          cell.onclick = () => showDayDetail(dateStr);
+        }
+
+        grid.appendChild(cell);
+      }
+
+      document.getElementById('month-checkin-count').innerText = `${checkinDays} 天`;
+    }
+
+    function changeMonth(delta) {
+      calDate.setMonth(calDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    function showDayDetail(dateStr) {
+      const dayLogs = logs.filter(log => log.date === dateStr);
+      const card = document.getElementById('day-detail-card');
+      const content = document.getElementById('detail-content');
+
+      document.getElementById('detail-date-title').innerText = `📅 ${dateStr} 训练记录`;
+      content.innerHTML = dayLogs.map(l => `
+        <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
+          <p><strong>类型：</strong> ${l.type} (${l.duration} 分钟)</p>
+          <p><strong>内容：</strong> ${l.note}</p>
+          ${l.img ? `<img src="${l.img}" class="img-preview">` : ''}
+        </div>
+      `).join('');
+
+      card.style.display = 'block';
+    }
+
+    // 动作库与日志逻辑
+    function addNewExercise(e) {
+      e.preventDefault();
+      const name = document.getElementById('ex-name').value;
+      const category = document.getElementById('ex-category').value;
+      const muscle = document.getElementById('ex-muscle').value;
+      const cueing = document.getElementById('ex-cueing').value;
+      const link = document.getElementById('ex-link').value;
+      const fileInput = document.getElementById('ex-image-input');
+
+      const save = (imgData = '') => {
+        customExerciseLib.push({ name, category, muscle, cueing, link, img: imgData });
+        localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
+        renderLibrary();
+        e.target.reset();
+        alert('✅ 动作添加成功！');
+      };
+
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(evt) { save(evt.target.result); };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        save();
+      }
+    }
+
+    function renderLibrary() {
+      const container = document.getElementById('library-list');
+      container.innerHTML = '';
+      
+      const defaultLib = [
+        { name: "百次呼吸 (The Hundred)", category: "垫上 (Mat)", muscle: "腹直肌、腹横肌", cueing: "双手快速拍打，吸气5秒，呼气5秒。" },
+        { name: "脚踏系列 (Footwork)", category: "普拉提床 (Reformer)", muscle: "股四头肌、腘绳肌、臀肌", cueing: "保持骨盆中立位，双脚踩稳脚棒。" }
+      ];
+
+      const all = [...defaultLib, ...customExerciseLib];
+      all.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'action-card';
+        card.innerHTML = `
+          <h4>${item.name}</h4>
+          <span class="tag">${item.category}</span>
+          <p><strong>目标肌群：</strong>${item.muscle}</p>
+          <p><strong>口令：</strong>${item.cueing}</p>
+          ${item.link ? `<a href="${item.link}" target="_blank" class="video-link-btn">▶ 查看视频</a>` : ''}
+          ${item.img ? `<img src="${item.img}" class="img-preview">` : ''}
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function addLog(e) {
+      e.preventDefault();
+      const date = document.getElementById('log-date').value;
+      const type = document.getElementById('log-type').value;
+      const duration = document.getElementById('log-duration').value;
+      const note = document.getElementById('log-note').value;
+      const fileInput = document.getElementById('log-image-input');
+
+      const save = (imgData = '') => {
+        logs.unshift({ date, type, duration, note, img: imgData });
+        localStorage.setItem('pilates_logs', JSON.stringify(logs));
+        renderLogs();
+        renderCalendar();
+        e.target.reset();
+        document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+        alert('📝 日志保存成功！');
+      };
+
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(evt) { save(evt.target.result); };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        save();
+      }
+    }
+
+    function renderLogs() {
+      const container = document.getElementById('log-history');
+      if (!container) return;
+      container.innerHTML = logs.map(l => `
+        <div class="log-item">
+          <div class="log-header">
+            <span>📅 ${l.date} - ${l.type}</span>
+            <span>⏱️ ${l.duration} 分钟</span>
+          </div>
+          <p style="font-size: 0.95rem; color: #444;">${l.note}</p>
+          ${l.img ? `<img src="${l.img}" class="img-preview">` : ''}
+        </div>
+      `).join('');
+    }
+
+    function filterLibrary() {
+      const q = document.getElementById('lib-search-input').value.toLowerCase();
+      document.querySelectorAll('#library-list .action-card').forEach(card => {
+        card.style.display = card.innerText.toLowerCase().includes(q) ? 'block' : 'none';
+      });
+    }
+
+    function setCategoryFilter(cat, btn) {
+      document.querySelectorAll('#category-filter-btns .filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('#library-list .action-card').forEach(card => {
+        if (cat === 'ALL' || card.innerText.includes(cat)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>
