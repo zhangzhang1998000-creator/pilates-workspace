@@ -1,4 +1,34 @@
 // 三种预设训练模式
+// 🏠 居家动作备选池（包含丰富的激活、核心、后侧链与放松动作）
+const homeExercisePool = [
+  "胸椎放松与呼吸激活 (Breathing) - 5min",
+  "猫牛式伸展与脊柱逐节动员 - 5min",
+  "百次呼吸 (The Hundred) 拍打激活 - 3min",
+  "单腿延伸 (Single Leg Stretch) - 8min",
+  "双腿延伸 (Double Leg Stretch) - 8min",
+  "交叉伸展 (Criss Cross) 腹斜肌强化 - 8min",
+  "单腿划圈 (Single Leg Circle) 髋关节松动 - 8min",
+  "滚球动作 (Rolling Like a Ball) 脊柱按摩 - 5min",
+  "天鹅展翅 (Swan) 背肌激活 - 8min",
+  "游泳式 (Swimming) 后侧链强化 - 8min",
+  "侧卧腿部系列 (Side Kick Series) 臀中肌 - 10min",
+  "桥式 (Shoulder Bridge) 臀大肌与腘绳肌 - 8min",
+  "支撑板 (Plank) 核心稳定性训练 - 5min",
+  "美人鱼拉伸 (Mermaid Stretch) 侧链放松 - 5min"
+];
+
+// 随机从动作池里抽取 4 个不重复的动作组合成今天的清单
+function generateRandomHomeTasks() {
+  // 随机打乱数组
+  const shuffled = [...homeExercisePool].sort(() => 0.5 - Math.random());
+  // 取前 4 个
+  const selected = shuffled.slice(0, 4);
+  return selected.map((text, index) => ({
+    id: `home_rand_${index}`,
+    text: text,
+    completed: false
+  }));
+}
 const modeConfigs = {
   home: {
     title: "🏠 工作日·居家高效模式 (30分钟)",
