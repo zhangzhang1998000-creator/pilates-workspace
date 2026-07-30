@@ -418,3 +418,56 @@ function updateStats() {
   const completedTasks = userTasks.filter(t => t.completed).length;
   document.getElementById('today-progress').innerText = `${completedTasks} / ${userTasks.length}`;
 }
+// ⏱️ 普拉提专注计时器逻辑
+let timerInterval = null;
+let timerSeconds = 0;
+let isTimerRunning = false;
+
+function updateTimerDisplay() {
+  const mins = Math.floor(timerSeconds / 60);
+  const secs = timerSeconds % 60;
+  document.getElementById('timer-display').innerText = 
+    `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+function setTimerPreset(seconds) {
+  clearInterval(timerInterval);
+  isTimerRunning = false;
+  timerSeconds = seconds;
+  document.getElementById('timer-start-btn').innerText = '▶ 开始';
+  updateTimerDisplay();
+}
+
+function toggleTimer() {
+  const btn = document.getElementById('timer-start-btn');
+  
+  if (isTimerRunning) {
+    clearInterval(timerInterval);
+    isTimerRunning = false;
+    btn.innerText = '▶ 继续';
+  } else {
+    if (timerSeconds <= 0) return alert('请先选择或设置计时时间！');
+    isTimerRunning = true;
+    btn.innerText = '⏸ 暂停';
+    
+    timerInterval = setInterval(() => {
+      timerSeconds--;
+      updateTimerDisplay();
+      
+      if (timerSeconds <= 0) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        btn.innerText = '▶ 开始';
+        alert('🔔 训练时间到！辛苦啦！');
+      }
+    }, 1000);
+  }
+}
+
+function resetTimer() {
+  clearInterval(timerInterval);
+  isTimerRunning = false;
+  timerSeconds = 0;
+  document.getElementById('timer-start-btn').innerText = '▶ 开始';
+  updateTimerDisplay();
+}
