@@ -74,9 +74,40 @@ const defaultExercises = [
   { name: "美人鱼拉伸 (Mermaid)", category: "稳踏椅 (Wunda Chair)", muscle: "侧链拉伸、腰方肌、肋间肌", cueing: "“坐骨紧贴坐垫，侧弯时保持双肩下沉，感受肋骨间隙被拉开。”" }
 ];
 
-// 初始化数据
+// 获取今天日期字符串 (如 "2026-07-29")
+const getTodayDateStr = () => new Date().toISOString().split('T')[0];
+
 let currentMode = localStorage.getItem('pilates_mode') || 'home';
-let userTasks = JSON.parse(localStorage.getItem(`pilates_tasks_${currentMode}`)) || modeConfigs[currentMode].tasks;
+let lastSavedDate = localStorage.getItem('pilates_last_date');
+const todayStr = getTodayDateStr();
+
+// 💡 核心逻辑：如果跨天了，重置所有模式，并且为“居家模式”重新随机抽取一组新动作！
+if (lastSavedDate !== todayStr) {
+  // 1. 居家模式：重新生成随机动作组合
+  const newHomeTasks = generateRandomHomeTasks();
+  localStorage.setItem('pilates_tasks_home', JSON.stringify(newHomeTasks));
+
+  // 2. 馆课与周末模式：重置完成状态（保持原有流程任务）
+  ['studio', 'weekend'].forEach(mode => {
+    let tasks = JSON.parse(localStorage.getItem(`pilates_tasks_${mode}`)) || modeConfigs[mode].tasks;
+    tasks = tasks.map(t => ({ ...t, completed: false }));
+    localStorage.setItem(`pilates_tasks_${mode}`, JSON.stringify(tasks));
+  });
+
+  // 更新上次保存的日期为今天
+  localStorage.setItem('pilates_last_date', todayStr);
+}
+
+// 读取当前选定模式的任务
+let userTasks = JSON.parse(localStorage.getItem(`pilates_tasks_${currentMode}`));
+
+// 如果是首次打开居家模式，没有缓存，则生成初始随机任务
+if (!userTasks && currentMode === 'home') {
+  userTasks = generateRandomHomeTasks();
+  localStorage.setItem('pilates_tasks_home', JSON.stringify(userTasks));
+} else if (!userTasks) {
+  userTasks = modeConfigs[currentMode].tasks;
+}
 let exerciseLibrary = JSON.parse(localStorage.getItem('pilates_exercises_v3')) || defaultExercises;
 let logs = JSON.parse(localStorage.getItem('pilates_logs')) || [];
 
