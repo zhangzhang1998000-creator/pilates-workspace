@@ -164,6 +164,22 @@ body {
   color: white;
 }
 
+/* 打卡日历部分（适配蓝色系） */
+.calendar-card { text-align: center; }
+.calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.calendar-header button { background: none; border: 1px solid #ddd; padding: 6px 12px; border-radius: 6px; cursor: pointer; color: var(--text-color); }
+.calendar-grid-header, .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.calendar-grid-header { font-weight: bold; margin-bottom: 8px; color: #777; }
+.calendar-day { padding: 12px 0; border-radius: 8px; background: #fafafa; font-size: 0.9rem; cursor: pointer; position: relative; color: #333; }
+.calendar-day.empty { background: transparent; cursor: default; }
+.calendar-day.has-checkin { background: #e9f5ff; font-weight: bold; color: var(--primary-color); }
+.calendar-day.has-checkin::after { content: "•"; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); color: var(--primary-color); font-size: 1.2rem; }
+.calendar-day.selected { border: 2px solid var(--primary-color); }
+
+/* 照片预览与视频链接按钮 */
+.img-preview { max-width: 100%; max-height: 220px; border-radius: 8px; margin-top: 10px; object-fit: cover; }
+.video-link-btn { display: inline-block; margin-top: 8px; font-size: 0.85rem; color: var(--primary-color); text-decoration: none; font-weight: bold; }
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
