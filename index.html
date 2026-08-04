@@ -161,6 +161,32 @@
 
     <section id="study" class="tab-content">
       <h2>📚 普拉提兼职/教培进阶知识库</h2>
+
+      <div class="card" style="margin-bottom: 20px;">
+        <h3>✍️ 记录日常学习知识</h3>
+        <p class="subtitle">记录你的解剖心得、带课笔记或体态评估要点，支持上传图片。</p>
+        <form onsubmit="addStudyNote(event)">
+          <div class="form-group">
+            <label>知识主题/标题：</label>
+            <input type="text" id="study-title" placeholder="例：骨盆前倾的肌肉失衡分析" required>
+          </div>
+          <div class="form-group">
+            <label>知识要点/心得总结：</label>
+            <textarea id="study-content" rows="3" placeholder="记录学习到的原理、评估流程或触发点..." required></textarea>
+          </div>
+          <div class="form-group">
+            <label>上传知识卡片/解剖示意图/笔记照片：</label>
+            <input type="file" id="study-image-input" accept="image/*">
+          </div>
+          <button type="submit" class="primary-btn">保存知识笔记</button>
+        </form>
+      </div>
+
+      <div class="card" style="margin-bottom: 20px;">
+        <h3>📖 我的日常知识笔记</h3>
+        <div id="study-notes-list" class="grid-list" style="margin-top: 15px;"></div>
+      </div>
+
       <div class="study-grid">
         <div class="card">
           <h3>🦴 1. 解剖学与体态评估</h3>
@@ -226,6 +252,7 @@
     let tasks = [];
     let logs = JSON.parse(localStorage.getItem('pilates_logs') || '[]');
     let customExerciseLib = JSON.parse(localStorage.getItem('pilates_custom_lib') || '[]');
+    let studyNotes = JSON.parse(localStorage.getItem('pilates_study_notes') || '[]');
     
     const modeConfigs = {
       home: { title: "🏠 工作日·居家模式 (随机挑选4项)", desc: "适合居家无器械或小器械的高效练习。" },
@@ -253,6 +280,7 @@
       renderCalendar();
       renderLibrary();
       renderLogs();
+      renderStudyNotes();
     };
 
     function switchTab(tabId) {
@@ -381,7 +409,7 @@
       updateTimerDisplay();
     }
 
-    // 🗓️ 包含【补卡】逻辑的日历
+    // 🗓️ 日历与补卡
     let calDate = new Date();
 
     function renderCalendar() {
@@ -415,7 +443,6 @@
           checkinDays++;
         }
 
-        // 所有日期都可以点击进行查看或补卡
         cell.onclick = () => showDayDetail(dateStr);
         grid.appendChild(cell);
       }
@@ -428,7 +455,6 @@
       renderCalendar();
     }
 
-    // 展开历史记录与补卡窗口
     function showDayDetail(dateStr) {
       const dayLogs = logs.filter(log => log.date === dateStr);
       const card = document.getElementById('day-detail-card');
@@ -449,7 +475,6 @@
         html += `<p style="color: #777; margin-bottom: 12px;">该日期暂无打卡记录。</p>`;
       }
 
-      // 快速补卡输入区域
       html += `
         <div style="margin-top: 15px; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px dashed #6895e9;">
           <h4 style="margin-bottom: 10px; color: var(--primary-color);">➕ 为 ${dateStr} 补打卡</h4>
@@ -470,7 +495,6 @@
       card.style.display = 'block';
     }
 
-    // 提交补卡处理
     function quickCheckin(dateStr) {
       const type = document.getElementById('quick-log-type').value;
       const duration = document.getElementById('quick-log-duration').value || 30;
@@ -490,6 +514,7 @@
       alert(`✅ ${dateStr} 补打卡成功！`);
     }
 
+    // 📖 动作库逻辑
     function addNewExercise(e) {
       e.preventDefault();
       const name = document.getElementById('ex-name').value;
@@ -541,6 +566,49 @@
       });
     }
 
+    // 💡 知识库笔记逻辑
+    function addStudyNote(e) {
+      e.preventDefault();
+      const title = document.getElementById('study-title').value;
+      const content = document.getElementById('study-content').value;
+      const fileInput = document.getElementById('study-image-input');
+      const date = new Date().toLocaleDateString();
+
+      const save = (imgData = '') => {
+        studyNotes.unshift({ title, content, date, img: imgData });
+        localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
+        renderStudyNotes();
+        e.target.reset();
+        alert('📚 知识笔记保存成功！');
+      };
+
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(evt) { save(evt.target.result); };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        save();
+      }
+    }
+
+    function renderStudyNotes() {
+      const container = document.getElementById('study-notes-list');
+      if (!container) return;
+      if (studyNotes.length === 0) {
+        container.innerHTML = `<p style="color: #777; grid-column: 1/-1;">暂无自建知识笔记，快在上面添加一条吧！</p>`;
+        return;
+      }
+      container.innerHTML = studyNotes.map(note => `
+        <div class="action-card" style="border-left-color: #3b82f6;">
+          <h4>${note.title}</h4>
+          <span class="tag" style="background: #eff6ff; color: #1d4ed8;">📅 ${note.date}</span>
+          <p style="white-space: pre-wrap; margin-top: 6px;">${note.content}</p>
+          ${note.img ? `<img src="${note.img}" class="img-preview">` : ''}
+        </div>
+      `).join('');
+    }
+
+    // ✍️ 复盘日志逻辑
     function addLog(e) {
       e.preventDefault();
       const date = document.getElementById('log-date').value;
