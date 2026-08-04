@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="/icon.png">
 
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/supabase-js/2.39.8/supabase.min.js"></script>
 </head>
 <body>
   <header class="navbar">
@@ -267,17 +267,17 @@
   </main>
 
   <script>
-    // ⚙️ Supabase 配置
+    // ⚙️ Supabase 安全初始化
     const SUPABASE_URL = 'https://wdhjcdwfebvdynyatulz.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_mzfGli751oRDZ2RBYHg6DA_iY886JTH';
     
     let supabase = null;
     try {
-      if (SUPABASE_URL && window.supabase) {
+      if (window.supabase && typeof window.supabase.createClient === 'function') {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       }
     } catch (e) {
-      console.error('Supabase 初始化异常:', e);
+      console.warn('Supabase 初始化跳过（将使用本地离线存储）:', e);
     }
 
     let currentMode = 'home';
@@ -318,7 +318,7 @@
       renderStudyNotes();
     });
 
-    // 🏷️ 标签页切换 (修正逻辑)
+    // 🏷️ 标签页切换逻辑 (增加事件防阻断)
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -722,7 +722,7 @@
       `).join('');
     }
 
-    // ☁️ 数据同步逻辑
+    // ☁️ 云端数据同步逻辑（增加防御性处理，绝不卡死页面）
     function saveDataAndSync() {
       localStorage.setItem('pilates_logs', JSON.stringify(logs));
       localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
@@ -739,18 +739,22 @@
     }
 
     async function uploadDataToCloud() {
-      if (!supabase) return alert('请先配置正确的 Supabase 信息！');
+      if (!supabase) return alert('当前处于离线存储模式（Supabase 库未成功加载），数据已妥善保存在本地浏览器中！');
       if (!syncKey) return alert('请先设置同步密钥！');
 
       const statusEl = document.getElementById('sync-status');
       if (statusEl) statusEl.innerText = '⏳ 正在同步到云端...';
 
-      const { error } = await supabase
-        .from('user_data')
-        .upsert({ id: syncKey, content: { logs, customExerciseLib, studyNotes }, updated_at: new Date() });
+      try {
+        const { error } = await supabase
+          .from('user_data')
+          .upsert({ id: syncKey, content: { logs, customExerciseLib, studyNotes }, updated_at: new Date() });
 
-      if (statusEl) {
-        statusEl.innerText = error ? ('❌ 同步失败：' + error.message) : '✅ 云端数据同步成功！';
+        if (statusEl) {
+          statusEl.innerText = error ? ('❌ 同步失败：' + error.message) : '✅ 云端数据同步成功！';
+        }
+      } catch (e) {
+        if (statusEl) statusEl.innerText = '❌ 同步失败：网络连接受阻。';
       }
     }
 
@@ -759,28 +763,32 @@
       const statusEl = document.getElementById('sync-status');
       if (statusEl) statusEl.innerText = '⏳ 正在从云端获取最新数据...';
 
-      const { data, error } = await supabase
-        .from('user_data')
-        .select('content')
-        .eq('id', syncKey)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('user_data')
+          .select('content')
+          .eq('id', syncKey)
+          .single();
 
-      if (error) {
-        if (statusEl) statusEl.innerText = '⚠️ 云端未找到此密钥的数据，您可以点击“手动同步”创建。';
-      } else if (data && data.content) {
-        logs = data.content.logs || [];
-        customExerciseLib = data.content.customExerciseLib || [];
-        studyNotes = data.content.studyNotes || [];
+        if (error) {
+          if (statusEl) statusEl.innerText = '⚠️ 云端未找到此密钥的数据，您可以点击“手动同步”创建。';
+        } else if (data && data.content) {
+          logs = data.content.logs || [];
+          customExerciseLib = data.content.customExerciseLib || [];
+          studyNotes = data.content.studyNotes || [];
 
-        localStorage.setItem('pilates_logs', JSON.stringify(logs));
-        localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
-        localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
+          localStorage.setItem('pilates_logs', JSON.stringify(logs));
+          localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
+          localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
 
-        renderCalendar();
-        renderLibrary();
-        renderLogs();
-        renderStudyNotes();
-        if (statusEl) statusEl.innerText = '✅ 云端最新数据已同步到本地！';
+          renderCalendar();
+          renderLibrary();
+          renderLogs();
+          renderStudyNotes();
+          if (statusEl) statusEl.innerText = '✅ 云端最新数据已同步到本地！';
+        }
+      } catch (e) {
+        if (statusEl) statusEl.innerText = '⚠️ 网络不畅，暂时使用本地缓存数据。';
       }
     }
   </script>
