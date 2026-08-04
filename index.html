@@ -65,7 +65,7 @@
         <h3>⏱️ 普拉提专注计时器</h3>
         <p class="subtitle">适用于动作 Hold 住（如 Plank 支撑）或分段训练计时</p>
         
-        <div style="font-size: 2.8rem; font-weight: bold; color: var(--primary-color); margin: 15px 0;" id="timer-display">00:00</div>
+        <div style="font-size: 2.8rem; font-weight: bold; color: var(--primary-color, #6895e9); margin: 15px 0;" id="timer-display">00:00</div>
         
         <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap;">
           <button class="small-btn" onclick="setTimerPreset(30)">30 秒</button>
@@ -261,13 +261,13 @@
           <button class="primary-btn" onclick="saveSyncKey()">保存密钥并立即拉取云端数据</button>
           <button class="toggle-btn" onclick="uploadDataToCloud()">手动同步本地到云端</button>
         </div>
-        <p id="sync-status" style="margin-top: 15px; font-weight: bold; color: var(--primary-color);"></p>
+        <p id="sync-status" style="margin-top: 15px; font-weight: bold; color: var(--primary-color, #6895e9);"></p>
       </div>
     </section>
   </main>
 
   <script>
-    // ⚙️ 修改后的正确 Supabase 地址
+    // ⚙️ Supabase 配置
     const SUPABASE_URL = 'https://wdhjcdwfebvdynyatulz.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_mzfGli751oRDZ2RBYHg6DA_iY886JTH';
     
@@ -300,13 +300,14 @@
       "侧卧腿系列 - 臀中肌激活 (各15次)", "天鹅展翅 - 脊柱后伸 (8次)"
     ];
 
-    window.onload = function() {
+    window.addEventListener('DOMContentLoaded', () => {
       const today = new Date().toISOString().split('T')[0];
       const logDateInput = document.getElementById('log-date');
       if (logDateInput) logDateInput.value = today;
 
       if (syncKey) {
-        document.getElementById('sync-key-input').value = syncKey;
+        const syncInput = document.getElementById('sync-key-input');
+        if (syncInput) syncInput.value = syncKey;
         downloadDataFromCloud();
       }
 
@@ -315,87 +316,9 @@
       renderLibrary();
       renderLogs();
       renderStudyNotes();
-    };
+    });
 
-    // ☁️ 云端数据同步逻辑
-    async function saveSyncKey() {
-      const inputVal = document.getElementById('sync-key-input').value.trim();
-      if (!inputVal) {
-        alert('请输入有效的同步密钥！');
-        return;
-      }
-      syncKey = inputVal;
-      localStorage.setItem('pilates_sync_key', syncKey);
-      await downloadDataFromCloud();
-    }
-
-    async function uploadDataToCloud() {
-      if (!supabase) {
-        alert('请先配置正确的 Supabase 信息！');
-        return;
-      }
-      if (!syncKey) {
-        alert('请先设置同步密钥！');
-        return;
-      }
-
-      const allData = {
-        logs,
-        customExerciseLib,
-        studyNotes
-      };
-
-      document.getElementById('sync-status').innerText = '⏳ 正在同步到云端...';
-      const { error } = await supabase
-        .from('user_data')
-        .upsert({ id: syncKey, content: allData, updated_at: new Date() });
-
-      if (error) {
-        document.getElementById('sync-status').innerText = '❌ 同步失败：' + error.message;
-      } else {
-        document.getElementById('sync-status').innerText = '✅ 云端数据同步成功！';
-      }
-    }
-
-    async function downloadDataFromCloud() {
-      if (!supabase || !syncKey) return;
-
-      document.getElementById('sync-status').innerText = '⏳ 正在从云端获取最新数据...';
-      const { data, error } = await supabase
-        .from('user_data')
-        .select('content')
-        .eq('id', syncKey)
-        .single();
-
-      if (error) {
-        document.getElementById('sync-status').innerText = '⚠️ 云端未找到此密钥的数据，您可以点击“手动同步”创建。';
-      } else if (data && data.content) {
-        logs = data.content.logs || [];
-        customExerciseLib = data.content.customExerciseLib || [];
-        studyNotes = data.content.studyNotes || [];
-
-        localStorage.setItem('pilates_logs', JSON.stringify(logs));
-        localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
-        localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
-
-        renderCalendar();
-        renderLibrary();
-        renderLogs();
-        renderStudyNotes();
-        document.getElementById('sync-status').innerText = '✅ 云端最新数据已同步到本地！';
-      }
-    }
-
-    // 自动保存与同步函数
-    function saveDataAndSync() {
-      localStorage.setItem('pilates_logs', JSON.stringify(logs));
-      localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
-      localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
-      if (supabase && syncKey) {
-        uploadDataToCloud();
-      }
-    }
-
+    // 🏷️ 标签页切换 (修正逻辑)
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -403,20 +326,27 @@
       const targetTab = document.getElementById(tabId);
       if (targetTab) targetTab.classList.add('active');
 
-      const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(
-        btn => btn.getAttribute('onclick').includes(`'${tabId}'`)
-      );
-      if (activeBtn) activeBtn.classList.add('active');
+      const navBtns = document.querySelectorAll('.nav-btn');
+      navBtns.forEach(btn => {
+        if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabId)) {
+          btn.classList.add('active');
+        }
+      });
+
+      if (tabId === 'calendar') renderCalendar();
     }
 
+    // 🏋️ 模式设置
     function setMode(mode) {
       currentMode = mode;
       document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
       const activeBtn = document.getElementById(`btn-mode-${mode}`);
       if (activeBtn) activeBtn.classList.add('active');
 
-      document.getElementById('mode-title').innerText = modeConfigs[mode].title;
-      document.getElementById('mode-desc').innerText = modeConfigs[mode].desc;
+      const titleEl = document.getElementById('mode-title');
+      const descEl = document.getElementById('mode-desc');
+      if (titleEl) titleEl.innerText = modeConfigs[mode].title;
+      if (descEl) descEl.innerText = modeConfigs[mode].desc;
 
       if (mode === 'home') {
         const shuffled = [...homeTaskPool].sort(() => 0.5 - Math.random());
@@ -439,6 +369,7 @@
 
     function renderTasks() {
       const list = document.getElementById('task-list');
+      if (!list) return;
       list.innerHTML = '';
       let completedCount = 0;
 
@@ -453,16 +384,20 @@
         list.appendChild(li);
       });
 
-      document.getElementById('today-progress').innerText = `${completedCount}/${tasks.length}`;
+      const progEl = document.getElementById('today-progress');
+      if (progEl) progEl.innerText = `${completedCount}/${tasks.length}`;
     }
 
     function toggleTask(index) {
-      tasks[index].completed = !tasks[index].completed;
-      renderTasks();
+      if (tasks[index]) {
+        tasks[index].completed = !tasks[index].completed;
+        renderTasks();
+      }
     }
 
     function addCustomTask() {
       const input = document.getElementById('new-task-input');
+      if (!input) return;
       const val = input.value.trim();
       if (val) {
         tasks.push({ text: val, completed: false });
@@ -479,13 +414,15 @@
     function updateTimerDisplay() {
       const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
       const secs = String(timerSeconds % 60).padStart(2, '0');
-      document.getElementById('timer-display').innerText = `${mins}:${secs}`;
+      const display = document.getElementById('timer-display');
+      if (display) display.innerText = `${mins}:${secs}`;
     }
 
     function setTimerPreset(sec) {
       clearInterval(timerInterval);
       isTimerRunning = false;
-      document.getElementById('timer-start-btn').innerText = '▶ 开始';
+      const btn = document.getElementById('timer-start-btn');
+      if (btn) btn.innerText = '▶ 开始';
       timerSeconds = sec;
       updateTimerDisplay();
     }
@@ -495,11 +432,11 @@
       if (isTimerRunning) {
         clearInterval(timerInterval);
         isTimerRunning = false;
-        btn.innerText = '▶ 继续';
+        if (btn) btn.innerText = '▶ 继续';
       } else {
-        if (timerSeconds <= 0) return;
+        if (timerSeconds <= 0) return alert('请先设置选择计时时间！');
         isTimerRunning = true;
-        btn.innerText = '❚❚ 暂停';
+        if (btn) btn.innerText = '❚❚ 暂停';
         timerInterval = setInterval(() => {
           if (timerSeconds > 0) {
             timerSeconds--;
@@ -507,7 +444,7 @@
           } else {
             clearInterval(timerInterval);
             isTimerRunning = false;
-            btn.innerText = '▶ 开始';
+            if (btn) btn.innerText = '▶ 开始';
             alert('⏱️ 计时结束！');
           }
         }, 1000);
@@ -518,7 +455,8 @@
       clearInterval(timerInterval);
       isTimerRunning = false;
       timerSeconds = 0;
-      document.getElementById('timer-start-btn').innerText = '▶ 开始';
+      const btn = document.getElementById('timer-start-btn');
+      if (btn) btn.innerText = '▶ 开始';
       updateTimerDisplay();
     }
 
@@ -528,9 +466,11 @@
     function renderCalendar() {
       const year = calDate.getFullYear();
       const month = calDate.getMonth();
-      document.getElementById('calendar-month-year').innerText = `${year} 年 ${month + 1} 月`;
+      const mEl = document.getElementById('calendar-month-year');
+      if (mEl) mEl.innerText = `${year} 年 ${month + 1} 月`;
 
       const grid = document.getElementById('calendar-grid');
+      if (!grid) return;
       grid.innerHTML = '';
 
       const firstDay = new Date(year, month, 1).getDay();
@@ -560,7 +500,8 @@
         grid.appendChild(cell);
       }
 
-      document.getElementById('month-checkin-count').innerText = `${checkinDays} 天`;
+      const countEl = document.getElementById('month-checkin-count');
+      if (countEl) countEl.innerText = `${checkinDays} 天`;
     }
 
     function changeMonth(delta) {
@@ -572,6 +513,7 @@
       const dayLogs = logs.filter(log => log.date === dateStr);
       const card = document.getElementById('day-detail-card');
       const content = document.getElementById('detail-content');
+      if (!card || !content) return;
 
       document.getElementById('detail-date-title').innerText = `📅 ${dateStr} 记录与补卡`;
 
@@ -590,7 +532,7 @@
 
       html += `
         <div style="margin-top: 15px; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px dashed #6895e9;">
-          <h4 style="margin-bottom: 10px; color: var(--primary-color);">➕ 为 ${dateStr} 补打卡</h4>
+          <h4 style="margin-bottom: 10px; color: var(--primary-color, #6895e9);">➕ 为 ${dateStr} 补打卡</h4>
           <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
             <select id="quick-log-type" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc;">
               <option value="居家自主">居家自主</option>
@@ -613,10 +555,7 @@
       const duration = document.getElementById('quick-log-duration').value || 30;
       const note = document.getElementById('quick-log-note').value.trim();
 
-      if (!note) {
-        alert('请先填写打卡心得/训练内容！');
-        return;
-      }
+      if (!note) return alert('请先填写打卡心得/训练内容！');
 
       logs.unshift({ date: dateStr, type, duration, note, img: '' });
       saveDataAndSync();
@@ -644,9 +583,9 @@
         alert('✅ 动作添加成功！');
       };
 
-      if (fileInput.files && fileInput.files[0]) {
+      if (fileInput && fileInput.files && fileInput.files[0]) {
         const reader = new FileReader();
-        reader.onload = function(evt) { save(evt.target.result); };
+        reader.onload = evt => save(evt.target.result);
         reader.readAsDataURL(fileInput.files[0]);
       } else {
         save();
@@ -655,6 +594,7 @@
 
     function renderLibrary() {
       const container = document.getElementById('library-list');
+      if (!container) return;
       container.innerHTML = '';
       
       const defaultLib = [
@@ -678,6 +618,21 @@
       });
     }
 
+    function filterLibrary() {
+      const q = document.getElementById('lib-search-input').value.toLowerCase();
+      document.querySelectorAll('#library-list .action-card').forEach(card => {
+        card.style.display = card.innerText.toLowerCase().includes(q) ? 'block' : 'none';
+      });
+    }
+
+    function setCategoryFilter(cat, btn) {
+      document.querySelectorAll('#category-filter-btns .filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      document.querySelectorAll('#library-list .action-card').forEach(card => {
+        card.style.display = (cat === 'ALL' || card.innerText.includes(cat)) ? 'block' : 'none';
+      });
+    }
+
     // 💡 知识库笔记
     function addStudyNote(e) {
       e.preventDefault();
@@ -694,9 +649,9 @@
         alert('📚 知识笔记保存成功！');
       };
 
-      if (fileInput.files && fileInput.files[0]) {
+      if (fileInput && fileInput.files && fileInput.files[0]) {
         const reader = new FileReader();
-        reader.onload = function(evt) { save(evt.target.result); };
+        reader.onload = evt => save(evt.target.result);
         reader.readAsDataURL(fileInput.files[0]);
       } else {
         save();
@@ -739,9 +694,9 @@
         alert('📝 日志保存成功！');
       };
 
-      if (fileInput.files && fileInput.files[0]) {
+      if (fileInput && fileInput.files && fileInput.files[0]) {
         const reader = new FileReader();
-        reader.onload = function(evt) { save(evt.target.result); };
+        reader.onload = evt => save(evt.target.result);
         reader.readAsDataURL(fileInput.files[0]);
       } else {
         save();
@@ -751,6 +706,10 @@
     function renderLogs() {
       const container = document.getElementById('log-history');
       if (!container) return;
+      if (logs.length === 0) {
+        container.innerHTML = '<p style="color:#888;">暂无日志，去记下今天的训练心得吧！</p>';
+        return;
+      }
       container.innerHTML = logs.map(l => `
         <div class="log-item">
           <div class="log-header">
@@ -763,23 +722,66 @@
       `).join('');
     }
 
-    function filterLibrary() {
-      const q = document.getElementById('lib-search-input').value.toLowerCase();
-      document.querySelectorAll('#library-list .action-card').forEach(card => {
-        card.style.display = card.innerText.toLowerCase().includes(q) ? 'block' : 'none';
-      });
+    // ☁️ 数据同步逻辑
+    function saveDataAndSync() {
+      localStorage.setItem('pilates_logs', JSON.stringify(logs));
+      localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
+      localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
+      if (supabase && syncKey) uploadDataToCloud();
     }
 
-    function setCategoryFilter(cat, btn) {
-      document.querySelectorAll('#category-filter-btns .filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('#library-list .action-card').forEach(card => {
-        if (cat === 'ALL' || card.innerText.includes(cat)) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
-      });
+    async function saveSyncKey() {
+      const inputVal = document.getElementById('sync-key-input').value.trim();
+      if (!inputVal) return alert('请输入有效的同步密钥！');
+      syncKey = inputVal;
+      localStorage.setItem('pilates_sync_key', syncKey);
+      await downloadDataFromCloud();
+    }
+
+    async function uploadDataToCloud() {
+      if (!supabase) return alert('请先配置正确的 Supabase 信息！');
+      if (!syncKey) return alert('请先设置同步密钥！');
+
+      const statusEl = document.getElementById('sync-status');
+      if (statusEl) statusEl.innerText = '⏳ 正在同步到云端...';
+
+      const { error } = await supabase
+        .from('user_data')
+        .upsert({ id: syncKey, content: { logs, customExerciseLib, studyNotes }, updated_at: new Date() });
+
+      if (statusEl) {
+        statusEl.innerText = error ? ('❌ 同步失败：' + error.message) : '✅ 云端数据同步成功！';
+      }
+    }
+
+    async function downloadDataFromCloud() {
+      if (!supabase || !syncKey) return;
+      const statusEl = document.getElementById('sync-status');
+      if (statusEl) statusEl.innerText = '⏳ 正在从云端获取最新数据...';
+
+      const { data, error } = await supabase
+        .from('user_data')
+        .select('content')
+        .eq('id', syncKey)
+        .single();
+
+      if (error) {
+        if (statusEl) statusEl.innerText = '⚠️ 云端未找到此密钥的数据，您可以点击“手动同步”创建。';
+      } else if (data && data.content) {
+        logs = data.content.logs || [];
+        customExerciseLib = data.content.customExerciseLib || [];
+        studyNotes = data.content.studyNotes || [];
+
+        localStorage.setItem('pilates_logs', JSON.stringify(logs));
+        localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
+        localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
+
+        renderCalendar();
+        renderLibrary();
+        renderLogs();
+        renderStudyNotes();
+        if (statusEl) statusEl.innerText = '✅ 云端最新数据已同步到本地！';
+      }
     }
   </script>
 </body>
