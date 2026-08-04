@@ -12,6 +12,13 @@
   <link rel="apple-touch-icon" href="/icon.png">
 
   <link rel="stylesheet" href="style.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ⚙️ 【请在这里替换你在 Supabase 复制的 2 个信息】
+    const SUPABASE_URL = 'https://wdhjcdwfebvdynyatulz.supabase.co/rest/v1/'; // 替换为你的 Project URL (Data API URL)
+    const SUPABASE_ANON_KEY = 'sb_publishable_mzfGli751oRDZ2RBYHg6DA_iY886JTH'; // 替换为你的 Publishable key (sb_publishable_...)
+  </script>
 </head>
 <body>
   <header class="navbar">
@@ -22,6 +29,7 @@
       <button class="nav-btn" onclick="switchTab('library')">动作库</button>
       <button class="nav-btn" onclick="switchTab('study')">知识库</button>
       <button class="nav-btn" onclick="switchTab('logs')">复盘日志</button>
+      <button class="nav-btn" onclick="switchTab('sync')">☁️ 数据同步</button>
     </nav>
   </header>
 
@@ -86,7 +94,7 @@
       <div class="card calendar-card">
         <div class="calendar-header">
           <button onclick="changeMonth(-1)">◀ 上个月</button>
-          <h3 id="calendar-month-year">2026 年 7 月</h3>
+          <h3 id="calendar-month-year">2026 年 8 月</h3>
           <button onclick="changeMonth(1)">下个月 ▶</button>
         </div>
         <div class="calendar-grid-header">
@@ -245,15 +253,38 @@
         <div id="log-history" style="margin-top: 15px;"></div>
       </div>
     </section>
+
+    <section id="sync" class="tab-content">
+      <h2>☁️ 多端数据同步配置</h2>
+      <div class="card">
+        <h3>🔑 设置你的同步密钥</h3>
+        <p class="subtitle">在电脑和手机上使用相同的【同步密钥】，即可实现两端数据互通。</p>
+        <div class="form-group">
+          <label>专属同步密钥 (比如你的手机号或自定义口令)：</label>
+          <input type="text" id="sync-key-input" placeholder="例：my_pilates_123456">
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+          <button class="primary-btn" onclick="saveSyncKey()">保存密钥并立即拉取云端数据</button>
+          <button class="toggle-btn" onclick="uploadDataToCloud()">手动同步本地到云端</button>
+        </div>
+        <p id="sync-status" style="margin-top: 15px; font-weight: bold; color: var(--primary-color);"></p>
+      </div>
+    </section>
   </main>
 
   <script>
+    let supabase = null;
+    if (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+
     let currentMode = 'home';
     let tasks = [];
     let logs = JSON.parse(localStorage.getItem('pilates_logs') || '[]');
     let customExerciseLib = JSON.parse(localStorage.getItem('pilates_custom_lib') || '[]');
     let studyNotes = JSON.parse(localStorage.getItem('pilates_study_notes') || '[]');
-    
+    let syncKey = localStorage.getItem('pilates_sync_key') || '';
+
     const modeConfigs = {
       home: { title: "🏠 工作日·居家模式 (随机挑选4项)", desc: "适合居家无器械或小器械的高效练习。" },
       studio: { title: "🧘‍♀️ 工作日·馆课观察与实践模式", desc: "适合在普拉提馆跟课、观摩教练口令及实操复盘。" },
@@ -261,14 +292,10 @@
     };
 
     const homeTaskPool = [
-      "胸椎放松与呼吸激活 (5min)",
-      "猫牛式与脊柱逐节动员 (5min)",
-      "死虫式腹横肌激活 (20次)",
-      "百次呼吸 (The Hundred) (100次)",
-      "单腿伸展与双腿伸展 (各10次)",
-      "臀桥核心稳定训练 (15次)",
-      "侧卧腿系列 - 臀中肌激活 (各15次)",
-      "天鹅展翅 - 脊柱后伸 (8次)"
+      "胸椎放松与呼吸激活 (5min)", "猫牛式与脊柱逐节动员 (5min)",
+      "死虫式腹横肌激活 (20次)", "百次呼吸 (The Hundred) (100次)",
+      "单腿伸展与双腿伸展 (各10次)", "臀桥核心稳定训练 (15次)",
+      "侧卧腿系列 - 臀中肌激活 (各15次)", "天鹅展翅 - 脊柱后伸 (8次)"
     ];
 
     window.onload = function() {
@@ -276,12 +303,91 @@
       const logDateInput = document.getElementById('log-date');
       if (logDateInput) logDateInput.value = today;
 
+      if (syncKey) {
+        document.getElementById('sync-key-input').value = syncKey;
+        downloadDataFromCloud();
+      }
+
       setMode('home');
       renderCalendar();
       renderLibrary();
       renderLogs();
       renderStudyNotes();
     };
+
+    // ☁️ 云端数据同步逻辑
+    async function saveSyncKey() {
+      const inputVal = document.getElementById('sync-key-input').value.trim();
+      if (!inputVal) {
+        alert('请输入有效的同步密钥！');
+        return;
+      }
+      syncKey = inputVal;
+      localStorage.setItem('pilates_sync_key', syncKey);
+      await downloadDataFromCloud();
+    }
+
+    async function uploadDataToCloud() {
+      if (!supabase) {
+        alert('请先在第 15-16 行配置 Supabase 的 URL 和 Key！');
+        return;
+      }
+      if (!syncKey) {
+        alert('请先设置同步密钥！');
+        return;
+      }
+
+      const allData = { logs, customExerciseLib, studyNotes };
+
+      document.getElementById('sync-status').innerText = '⏳ 正在同步到云端...';
+      const { error } = await supabase
+        .from('user_data')
+        .upsert({ id: syncKey, content: allData, updated_at: new Date() });
+
+      if (error) {
+        document.getElementById('sync-status').innerText = '❌ 同步失败：' + error.message;
+      } else {
+        document.getElementById('sync-status').innerText = '✅ 云端数据同步成功！';
+      }
+    }
+
+    async function downloadDataFromCloud() {
+      if (!supabase || !syncKey) return;
+
+      document.getElementById('sync-status').innerText = '⏳ 正在从云端获取最新数据...';
+      const { data, error } = await supabase
+        .from('user_data')
+        .select('content')
+        .eq('id', syncKey)
+        .single();
+
+      if (error) {
+        document.getElementById('sync-status').innerText = '⚠️ 云端未找到此密钥的数据，您可以点击“手动同步”创建。';
+      } else if (data && data.content) {
+        logs = data.content.logs || [];
+        customExerciseLib = data.content.customExerciseLib || [];
+        studyNotes = data.content.studyNotes || [];
+
+        localStorage.setItem('pilates_logs', JSON.stringify(logs));
+        localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
+        localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
+
+        renderCalendar();
+        renderLibrary();
+        renderLogs();
+        renderStudyNotes();
+        document.getElementById('sync-status').innerText = '✅ 云端最新数据已同步到本地！';
+      }
+    }
+
+    function saveDataAndSync() {
+      localStorage.setItem('pilates_logs', JSON.stringify(logs));
+      localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
+      localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
+      if (supabase && syncKey) {
+        uploadDataToCloud();
+      }
+    }
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -358,7 +464,6 @@
       }
     }
 
-    // ⏱️ 计时器逻辑
     let timerSeconds = 0;
     let timerInterval = null;
     let isTimerRunning = false;
@@ -409,13 +514,12 @@
       updateTimerDisplay();
     }
 
-    // 🗓️ 日历与补卡
     let calDate = new Date();
 
     function renderCalendar() {
       const year = calDate.getFullYear();
       const month = calDate.getMonth();
-      document.getElementById('calendar-month-year').innerText = `${year} 年 ${month + 1} 月`;
+      document.getElementById('calendar-month-year').innerText = `${year} 年${month + 1} 月`;
 
       const grid = document.getElementById('calendar-grid');
       grid.innerHTML = '';
@@ -467,8 +571,7 @@
         html += dayLogs.map(l => `
           <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
             <p><strong>类型：</strong> ${l.type} (${l.duration} 分钟)</p>
-            <p><strong>心得：</strong> ${l.note}</p>
-            ${l.img ? `<img src="${l.img}" class="img-preview">` : ''}
+            <p><strong>心得：</strong> ${l.note}</p>${l.img ? `<img src="${l.img}" class="img-preview">` : ''}
           </div>
         `).join('');
       } else {
@@ -486,189 +589,4 @@
             </select>
             <input type="number" id="quick-log-duration" placeholder="时长(分钟)" value="30" style="width: 110px; padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc;">
           </div>
-          <textarea id="quick-log-note" rows="2" placeholder="输入本次补打卡的训练内容或心得..." style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 10px; box-sizing: border-box;"></textarea>
-          <button class="small-btn" onclick="quickCheckin('${dateStr}')">提交补卡</button>
-        </div>
-      `;
-
-      content.innerHTML = html;
-      card.style.display = 'block';
-    }
-
-    function quickCheckin(dateStr) {
-      const type = document.getElementById('quick-log-type').value;
-      const duration = document.getElementById('quick-log-duration').value || 30;
-      const note = document.getElementById('quick-log-note').value.trim();
-
-      if (!note) {
-        alert('请先填写打卡心得/训练内容！');
-        return;
-      }
-
-      logs.unshift({ date: dateStr, type, duration, note, img: '' });
-      localStorage.setItem('pilates_logs', JSON.stringify(logs));
-      
-      renderCalendar();
-      renderLogs();
-      showDayDetail(dateStr);
-      alert(`✅ ${dateStr} 补打卡成功！`);
-    }
-
-    // 📖 动作库逻辑
-    function addNewExercise(e) {
-      e.preventDefault();
-      const name = document.getElementById('ex-name').value;
-      const category = document.getElementById('ex-category').value;
-      const muscle = document.getElementById('ex-muscle').value;
-      const cueing = document.getElementById('ex-cueing').value;
-      const link = document.getElementById('ex-link').value;
-      const fileInput = document.getElementById('ex-image-input');
-
-      const save = (imgData = '') => {
-        customExerciseLib.push({ name, category, muscle, cueing, link, img: imgData });
-        localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
-        renderLibrary();
-        e.target.reset();
-        alert('✅ 动作添加成功！');
-      };
-
-      if (fileInput.files && fileInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(evt) { save(evt.target.result); };
-        reader.readAsDataURL(fileInput.files[0]);
-      } else {
-        save();
-      }
-    }
-
-    function renderLibrary() {
-      const container = document.getElementById('library-list');
-      container.innerHTML = '';
-      
-      const defaultLib = [
-        { name: "百次呼吸 (The Hundred)", category: "垫上 (Mat)", muscle: "腹直肌、腹横肌", cueing: "双手快速拍打，吸气5秒，呼气5秒。" },
-        { name: "脚踏系列 (Footwork)", category: "普拉提床 (Reformer)", muscle: "股四头肌、腘绳肌、臀肌", cueing: "保持骨盆中立位，双脚踩稳脚棒。" }
-      ];
-
-      const all = [...defaultLib, ...customExerciseLib];
-      all.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'action-card';
-        card.innerHTML = `
-          <h4>${item.name}</h4>
-          <span class="tag">${item.category}</span>
-          <p><strong>目标肌群：</strong>${item.muscle}</p>
-          <p><strong>口令：</strong>${item.cueing}</p>
-          ${item.link ? `<a href="${item.link}" target="_blank" class="video-link-btn">▶ 查看视频</a>` : ''}
-          ${item.img ? `<img src="${item.img}" class="img-preview">` : ''}
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    // 💡 知识库笔记逻辑
-    function addStudyNote(e) {
-      e.preventDefault();
-      const title = document.getElementById('study-title').value;
-      const content = document.getElementById('study-content').value;
-      const fileInput = document.getElementById('study-image-input');
-      const date = new Date().toLocaleDateString();
-
-      const save = (imgData = '') => {
-        studyNotes.unshift({ title, content, date, img: imgData });
-        localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
-        renderStudyNotes();
-        e.target.reset();
-        alert('📚 知识笔记保存成功！');
-      };
-
-      if (fileInput.files && fileInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(evt) { save(evt.target.result); };
-        reader.readAsDataURL(fileInput.files[0]);
-      } else {
-        save();
-      }
-    }
-
-    function renderStudyNotes() {
-      const container = document.getElementById('study-notes-list');
-      if (!container) return;
-      if (studyNotes.length === 0) {
-        container.innerHTML = `<p style="color: #777; grid-column: 1/-1;">暂无自建知识笔记，快在上面添加一条吧！</p>`;
-        return;
-      }
-      container.innerHTML = studyNotes.map(note => `
-        <div class="action-card" style="border-left-color: #3b82f6;">
-          <h4>${note.title}</h4>
-          <span class="tag" style="background: #eff6ff; color: #1d4ed8;">📅 ${note.date}</span>
-          <p style="white-space: pre-wrap; margin-top: 6px;">${note.content}</p>
-          ${note.img ? `<img src="${note.img}" class="img-preview">` : ''}
-        </div>
-      `).join('');
-    }
-
-    // ✍️ 复盘日志逻辑
-    function addLog(e) {
-      e.preventDefault();
-      const date = document.getElementById('log-date').value;
-      const type = document.getElementById('log-type').value;
-      const duration = document.getElementById('log-duration').value;
-      const note = document.getElementById('log-note').value;
-      const fileInput = document.getElementById('log-image-input');
-
-      const save = (imgData = '') => {
-        logs.unshift({ date, type, duration, note, img: imgData });
-        localStorage.setItem('pilates_logs', JSON.stringify(logs));
-        renderLogs();
-        renderCalendar();
-        e.target.reset();
-        document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
-        alert('📝 日志保存成功！');
-      };
-
-      if (fileInput.files && fileInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(evt) { save(evt.target.result); };
-        reader.readAsDataURL(fileInput.files[0]);
-      } else {
-        save();
-      }
-    }
-
-    function renderLogs() {
-      const container = document.getElementById('log-history');
-      if (!container) return;
-      container.innerHTML = logs.map(l => `
-        <div class="log-item">
-          <div class="log-header">
-            <span>📅 ${l.date} - ${l.type}</span>
-            <span>⏱️ ${l.duration} 分钟</span>
-          </div>
-          <p style="font-size: 0.95rem; color: #444;">${l.note}</p>
-          ${l.img ? `<img src="${l.img}" class="img-preview">` : ''}
-        </div>
-      `).join('');
-    }
-
-    function filterLibrary() {
-      const q = document.getElementById('lib-search-input').value.toLowerCase();
-      document.querySelectorAll('#library-list .action-card').forEach(card => {
-        card.style.display = card.innerText.toLowerCase().includes(q) ? 'block' : 'none';
-      });
-    }
-
-    function setCategoryFilter(cat, btn) {
-      document.querySelectorAll('#category-filter-btns .filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('#library-list .action-card').forEach(card => {
-        if (cat === 'ALL' || card.innerText.includes(cat)) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
-      });
-    }
-  </script>
-</body>
-</html>
+          <textarea id="quick-log-note" rows="2" placeholder="输入本次补打卡的训练内容或心得..." style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #
