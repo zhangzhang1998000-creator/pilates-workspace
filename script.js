@@ -58,7 +58,7 @@ const modeConfigs = {
   weekend: { title: "⏳ 周末·深度研习与备课模式 (90+分钟)", desc: "每周/每日自动从进阶专题池抽取 4 项研习备课课题。" }
 };
 
-// 丰富版动作库（内置视频示范）
+// 动作库默认数据
 const defaultExercises = [
   { 
     name: "百次呼吸 (The Hundred)", 
@@ -73,34 +73,6 @@ const defaultExercises = [
     muscle: "脊柱逐节控制、腹斜肌", 
     link: "https://search.bilibili.com/all?keyword=%E6%99%AE%E2%81%B7%E6%8F%90%E5%8D%B7%E8%B5%B7%E7%A4%BA%E8%8C%83", 
     cueing: "“不要用惯性甩起来，想象脊柱像珍珠项链一样逐节离开地面。”" 
-  },
-  { 
-    name: "脚踏系列 (Footwork)", 
-    category: "普拉提床 (Reformer)", 
-    muscle: "股四头肌、腘绳肌、足弓力量", 
-    link: "https://search.bilibili.com/all?keyword=Reformer+Footwork+%E6%8F%89%E7%BF%BB", 
-    cueing: "“脚掌踩稳脚踏板，用腹部控制推床与收床的节奏，不要撞击滑轨。”" 
-  },
-  { 
-    name: "大象式 (Elephant)", 
-    category: "普拉提床 (Reformer)", 
-    muscle: "腘绳肌拉伸、腹肌收缩、肩膀稳定性", 
-    link: "https://search.bilibili.com/all?keyword=Reformer+Elephant+%E5%A4%A7%E8%B1%A1%E5%BC%8F", 
-    cueing: "“脚跟踩实脚踏，想象用腹肌拉动滑板向前，保持下背部微拱。”" 
-  },
-  { 
-    name: "下压横杠 (Push Through)", 
-    category: "凯迪拉克 (Cadillac)", 
-    muscle: "背阔肌、肩胛稳定性、核心", 
-    link: "https://search.bilibili.com/all?keyword=Cadillac+Push+Through", 
-    cueing: "“下压横杠时保持腋下收紧，不要用手腕死拉，想象用背部发力。”" 
-  },
-  { 
-    name: "美人鱼拉伸 (Mermaid)", 
-    category: "稳踏椅 (Wunda Chair)", 
-    muscle: "侧链拉伸、腰方肌、肋间肌", 
-    link: "https://search.bilibili.com/all?keyword=Wunda+Chair+Mermaid", 
-    cueing: "“坐骨紧贴坐垫，侧弯时保持双肩下沉，感受肋骨间隙被拉开。”" 
   }
 ];
 
@@ -133,17 +105,30 @@ let currentCategoryFilter = 'ALL';
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
 
+// 🛡️ 安全初始化：等 HTML 元素全部加载完成后再绑定监听事件
 document.addEventListener("DOMContentLoaded", () => {
   setMode(currentMode, false);
   renderLibrary();
   renderLogs();
   renderCalendar();
   updateStats();
+
   const dateInput = document.getElementById('log-date');
   if (dateInput) dateInput.value = todayStr;
+
+  // 如果页面上有表单，安全绑定 submit 事件
+  const logForm = document.getElementById('log-form');
+  if (logForm) {
+    logForm.addEventListener('submit', addLog);
+  }
+
+  const exForm = document.getElementById('ex-form');
+  if (exForm) {
+    exForm.addEventListener('submit', addNewExercise);
+  }
 });
 
-// 🛠️ 完善后的标签页切换逻辑（精准高亮，不会卡死）
+// 标签页切换
 function switchTab(tabId) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -151,7 +136,6 @@ function switchTab(tabId) {
   const targetTab = document.getElementById(tabId);
   if (targetTab) targetTab.classList.add('active');
 
-  // 精准寻找并激活导航按钮
   const navBtns = document.querySelectorAll('.nav-btn');
   navBtns.forEach(btn => {
     const onclickAttr = btn.getAttribute('onclick') || '';
@@ -231,7 +215,6 @@ function saveDailyProgress() {
   renderCalendar();
 }
 
-// 🗓️ 日历渲染与补打卡功能
 function renderCalendar() {
   const grid = document.getElementById('calendar-grid');
   if (!grid) return;
@@ -277,7 +260,6 @@ function changeMonth(delta) {
   renderCalendar();
 }
 
-// 查看历史与补打卡弹窗
 function showDayDetail(dateStr) {
   const detailCard = document.getElementById('day-detail-card');
   const detailContent = document.getElementById('detail-content');
@@ -314,7 +296,6 @@ function showDayDetail(dateStr) {
   detailContent.innerHTML = html;
 }
 
-// 补打卡逻辑
 function makeUpCheckin(dateStr) {
   let records = JSON.parse(localStorage.getItem('pilates_daily_records')) || {};
   records[dateStr] = {
@@ -327,7 +308,6 @@ function makeUpCheckin(dateStr) {
   alert(`🎉 成功补打 ${dateStr} 的打卡！`);
 }
 
-// 补日志跳转逻辑
 function jumpToLogWithDate(dateStr) {
   switchTab('logs');
   const dInput = document.getElementById('log-date');
@@ -345,7 +325,6 @@ function getBase64(file) {
   });
 }
 
-// 🔍 渲染动作库（带搜索与筛选）
 function renderLibrary() {
   const libList = document.getElementById('library-list');
   if (!libList) return;
@@ -495,7 +474,7 @@ function updateStats() {
   if (progressEl) progressEl.innerText = `${completedTasks} / ${(userTasks || []).length}`;
 }
 
-// ⏱️ 普拉提专注计时器逻辑
+// ⏱️ 计时器
 let timerInterval = null;
 let timerSeconds = 0;
 let isTimerRunning = false;
