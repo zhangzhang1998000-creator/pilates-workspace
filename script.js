@@ -35,12 +35,12 @@ const weekendTopicPool = [
 
 function generateRandomHomeTasks() {
   const shuffled = [...homeExercisePool].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, 4).map((text, index) => ({ id: `home_rand_${index}`, text, completed: false }));
+  return shuffled.slice(0, 4).map((text, index) => ({ id: `home_rand_${index}_${Date.now()}`, text, completed: false }));
 }
 
 function generateRandomWeekendTasks() {
   const shuffled = [...weekendTopicPool].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, 4).map((text, index) => ({ id: `weekend_rand_${index}`, text, completed: false }));
+  return shuffled.slice(0, 4).map((text, index) => ({ id: `weekend_rand_${index}_${Date.now()}`, text, completed: false }));
 }
 
 const modeConfigs = {
@@ -82,21 +82,25 @@ let currentMode = localStorage.getItem('pilates_mode') || 'home';
 let lastSavedDate = localStorage.getItem('pilates_last_date');
 const todayStr = getTodayDateStr();
 
-// 每日自动刷新
+// 📅 每日自动刷新机制
 if (lastSavedDate !== todayStr) {
   localStorage.setItem('pilates_tasks_home', JSON.stringify(generateRandomHomeTasks()));
   localStorage.setItem('pilates_tasks_weekend', JSON.stringify(generateRandomWeekendTasks()));
   
   let studioTasks = JSON.parse(localStorage.getItem('pilates_tasks_studio')) || modeConfigs.studio.tasks;
-  if (studioTasks) localStorage.setItem('pilates_tasks_studio', JSON.stringify(studioTasks.map(t => ({ ...t, completed: false }))));
+  if (studioTasks) {
+    localStorage.setItem('pilates_tasks_studio', JSON.stringify(studioTasks.map(t => ({ ...t, completed: false }))));
+  }
   
   localStorage.setItem('pilates_last_date', todayStr);
 }
 
 let userTasks = JSON.parse(localStorage.getItem(`pilates_tasks_${currentMode}`));
-if (!userTasks && currentMode === 'home') userTasks = generateRandomHomeTasks();
-if (!userTasks && currentMode === 'weekend') userTasks = generateRandomWeekendTasks();
-if (!userTasks && currentMode === 'studio') userTasks = modeConfigs.studio.tasks;
+if (!userTasks) {
+  if (currentMode === 'home') userTasks = generateRandomHomeTasks();
+  else if (currentMode === 'weekend') userTasks = generateRandomWeekendTasks();
+  else if (currentMode === 'studio') userTasks = modeConfigs.studio.tasks;
+}
 
 let exerciseLibrary = JSON.parse(localStorage.getItem('pilates_exercises_v5')) || defaultExercises;
 let logs = JSON.parse(localStorage.getItem('pilates_logs')) || [];
@@ -105,7 +109,7 @@ let currentCategoryFilter = 'ALL';
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
 
-// 🛡️ 安全初始化：等 HTML 元素全部加载完成后再绑定监听事件
+// 🛡️ 安全初始化：DOM 树完全构建后再绑定监听
 document.addEventListener("DOMContentLoaded", () => {
   setMode(currentMode, false);
   renderLibrary();
@@ -116,19 +120,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const dateInput = document.getElementById('log-date');
   if (dateInput) dateInput.value = todayStr;
 
-  // 如果页面上有表单，安全绑定 submit 事件
   const logForm = document.getElementById('log-form');
-  if (logForm) {
-    logForm.addEventListener('submit', addLog);
-  }
+  if (logForm) logForm.addEventListener('submit', addLog);
 
   const exForm = document.getElementById('ex-form');
-  if (exForm) {
-    exForm.addEventListener('submit', addNewExercise);
-  }
+  if (exForm) exForm.addEventListener('submit', addNewExercise);
 });
 
-// 标签页切换
+// 📌 标签页切换
 function switchTab(tabId) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -147,6 +146,7 @@ function switchTab(tabId) {
   if (tabId === 'calendar') renderCalendar();
 }
 
+// 🔄 模式切换
 function setMode(modeKey, isUserClick = true) {
   currentMode = modeKey;
   localStorage.setItem('pilates_mode', modeKey);
@@ -156,23 +156,27 @@ function setMode(modeKey, isUserClick = true) {
   if (activeBtn) activeBtn.classList.add('active');
 
   userTasks = JSON.parse(localStorage.getItem(`pilates_tasks_${modeKey}`));
-  if (!userTasks && modeKey === 'home') userTasks = generateRandomHomeTasks();
-  if (!userTasks && modeKey === 'weekend') userTasks = generateRandomWeekendTasks();
-  if (!userTasks && modeKey === 'studio') userTasks = modeConfigs.studio.tasks;
+  if (!userTasks) {
+    if (modeKey === 'home') userTasks = generateRandomHomeTasks();
+    else if (modeKey === 'weekend') userTasks = generateRandomWeekendTasks();
+    else if (modeKey === 'studio') userTasks = modeConfigs.studio.tasks;
+  }
 
   const titleEl = document.getElementById('mode-title');
   const descEl = document.getElementById('mode-desc');
-  if (titleEl) titleEl.innerText = modeConfigs[modeKey].title;
-  if (descEl) descEl.innerText = modeConfigs[modeKey].desc;
+  if (titleEl && modeConfigs[modeKey]) titleEl.innerText = modeConfigs[modeKey].title;
+  if (descEl && modeConfigs[modeKey]) descEl.innerText = modeConfigs[modeKey].desc;
   
   renderTasks();
   updateStats();
 }
 
+// 📋 任务列表渲染与操作
 function renderTasks() {
   const taskList = document.getElementById('task-list');
   if (!taskList) return;
   taskList.innerHTML = '';
+  
   (userTasks || []).forEach(task => {
     const li = document.createElement('li');
     li.className = `task-item ${task.completed ? 'completed' : ''}`;
@@ -189,6 +193,7 @@ function addCustomTask() {
   if (!input) return;
   const text = input.value.trim();
   if (!text) return;
+  
   if (!userTasks) userTasks = [];
   userTasks.push({ id: 'custom_' + Date.now(), text, completed: false });
   localStorage.setItem(`pilates_tasks_${currentMode}`, JSON.stringify(userTasks));
@@ -215,6 +220,7 @@ function saveDailyProgress() {
   renderCalendar();
 }
 
+// 🗓️ 打卡日历部分
 function renderCalendar() {
   const grid = document.getElementById('calendar-grid');
   if (!grid) return;
@@ -316,6 +322,7 @@ function jumpToLogWithDate(dateStr) {
   if (formEl) window.scrollTo({ top: formEl.offsetTop - 80, behavior: 'smooth' });
 }
 
+// 🖼️ 图片 Base64 转码辅助
 function getBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -325,6 +332,7 @@ function getBase64(file) {
   });
 }
 
+// 📚 动作库部分
 function renderLibrary() {
   const libList = document.getElementById('library-list');
   if (!libList) return;
@@ -356,8 +364,8 @@ function renderLibrary() {
     div.innerHTML = `
       <h4>${item.name}</h4>
       <span class="tag">🏷️ ${item.category || '综合'}</span>
-      <p><strong>🎯 目标：</strong> ${item.muscle}</p>
-      <p><strong>🗣️ Cueing：</strong> ${item.cueing}</p>
+      <p><strong>🎯 目标：</strong> ${item.muscle || '通用'}</p>
+      <p><strong>🗣️ Cueing：</strong> ${item.cueing || '暂无口令记录'}</p>
       ${imgHtml}
       ${linkHtml}
     `;
@@ -386,13 +394,13 @@ async function addNewExercise(e) {
   const cueEl = document.getElementById('ex-cueing');
   const fileInput = document.getElementById('ex-image-input');
 
-  if (!nameEl) return;
+  if (!nameEl || !nameEl.value.trim()) return alert('请填入动作名称！');
 
-  const name = nameEl.value;
+  const name = nameEl.value.trim();
   const category = catEl ? catEl.value : '垫上 (Mat)';
-  const muscle = musEl ? musEl.value : '';
-  const link = linkEl ? linkEl.value : '';
-  const cueing = cueEl ? cueEl.value : '';
+  const muscle = musEl ? musEl.value.trim() : '';
+  const link = linkEl ? linkEl.value.trim() : '';
+  const cueing = cueEl ? cueEl.value.trim() : '';
 
   let img = '';
   if (fileInput && fileInput.files.length > 0) {
@@ -411,6 +419,7 @@ async function addNewExercise(e) {
   alert('🎉 动作保存成功！');
 }
 
+// 📖 日志部分
 async function addLog(e) {
   if (e) e.preventDefault();
   const dEl = document.getElementById('log-date');
@@ -419,12 +428,12 @@ async function addLog(e) {
   const nEl = document.getElementById('log-note');
   const fileInput = document.getElementById('log-image-input');
 
-  if (!dEl || !nEl) return;
+  if (!dEl || !nEl || !nEl.value.trim()) return alert('请填写日志内容！');
 
   const date = dEl.value;
   const type = tEl ? tEl.value : '自主训练';
   const duration = durEl ? durEl.value : '30';
-  const note = nEl.value;
+  const note = nEl.value.trim();
 
   let img = '';
   if (fileInput && fileInput.files.length > 0) {
@@ -474,7 +483,7 @@ function updateStats() {
   if (progressEl) progressEl.innerText = `${completedTasks} / ${(userTasks || []).length}`;
 }
 
-// ⏱️ 计时器
+// ⏱️ 训练计时器逻辑
 let timerInterval = null;
 let timerSeconds = 0;
 let isTimerRunning = false;
