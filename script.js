@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (dateInput) dateInput.value = todayStr;
 });
 
-// 🛠️ 修复了这里的 event 隐式报错问题
+// 🛠️ 完善后的标签页切换逻辑（精准高亮，不会卡死）
 function switchTab(tabId) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -151,9 +151,15 @@ function switchTab(tabId) {
   const targetTab = document.getElementById(tabId);
   if (targetTab) targetTab.classList.add('active');
 
-  if (window.event && window.event.target) {
-    window.event.target.classList.add('active');
-  }
+  // 精准寻找并激活导航按钮
+  const navBtns = document.querySelectorAll('.nav-btn');
+  navBtns.forEach(btn => {
+    const onclickAttr = btn.getAttribute('onclick') || '';
+    if (onclickAttr.includes(`'${tabId}'`) || onclickAttr.includes(`"${tabId}"`)) {
+      btn.classList.add('active');
+    }
+  });
+
   if (tabId === 'calendar') renderCalendar();
 }
 
@@ -199,6 +205,7 @@ function addCustomTask() {
   if (!input) return;
   const text = input.value.trim();
   if (!text) return;
+  if (!userTasks) userTasks = [];
   userTasks.push({ id: 'custom_' + Date.now(), text, completed: false });
   localStorage.setItem(`pilates_tasks_${currentMode}`, JSON.stringify(userTasks));
   input.value = '';
@@ -207,7 +214,7 @@ function addCustomTask() {
 }
 
 function toggleTask(id) {
-  userTasks = userTasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+  userTasks = (userTasks || []).map(t => t.id === id ? { ...t, completed: !t.completed } : t);
   localStorage.setItem(`pilates_tasks_${currentMode}`, JSON.stringify(userTasks));
   renderTasks();
   updateStats();
@@ -217,7 +224,7 @@ function toggleTask(id) {
 function saveDailyProgress() {
   let records = JSON.parse(localStorage.getItem('pilates_daily_records')) || {};
   records[todayStr] = {
-    mode: modeConfigs[currentMode].title,
+    mode: modeConfigs[currentMode] ? modeConfigs[currentMode].title : "自主模式",
     tasks: userTasks
   };
   localStorage.setItem('pilates_daily_records', JSON.stringify(records));
@@ -285,7 +292,7 @@ function showDayDetail(dateStr) {
 
   if (dayRecord) {
     html += `<p style="margin-top:8px;"><strong>🏋️ 锻炼模式：</strong> ${dayRecord.mode}</p><ul style="margin: 8px 0 15px 20px;">`;
-    dayRecord.tasks.forEach(t => {
+    (dayRecord.tasks || []).forEach(t => {
       html += `<li style="color: ${t.completed ? '#6895e9' : '#888'}">${t.completed ? '✓' : '✗'} ${t.text}</li>`;
     });
     html += `</ul>`;
@@ -392,13 +399,21 @@ function filterLibrary() {
 }
 
 async function addNewExercise(e) {
-  e.preventDefault();
-  const name = document.getElementById('ex-name').value;
-  const category = document.getElementById('ex-category').value;
-  const muscle = document.getElementById('ex-muscle').value;
-  const link = document.getElementById('ex-link').value;
-  const cueing = document.getElementById('ex-cueing').value;
+  if (e) e.preventDefault();
+  const nameEl = document.getElementById('ex-name');
+  const catEl = document.getElementById('ex-category');
+  const musEl = document.getElementById('ex-muscle');
+  const linkEl = document.getElementById('ex-link');
+  const cueEl = document.getElementById('ex-cueing');
   const fileInput = document.getElementById('ex-image-input');
+
+  if (!nameEl) return;
+
+  const name = nameEl.value;
+  const category = catEl ? catEl.value : '垫上 (Mat)';
+  const muscle = musEl ? musEl.value : '';
+  const link = linkEl ? linkEl.value : '';
+  const cueing = cueEl ? cueEl.value : '';
 
   let img = '';
   if (fileInput && fileInput.files.length > 0) {
@@ -409,21 +424,28 @@ async function addNewExercise(e) {
   localStorage.setItem('pilates_exercises_v5', JSON.stringify(exerciseLibrary));
   renderLibrary();
 
-  document.getElementById('ex-name').value = '';
-  document.getElementById('ex-muscle').value = '';
-  document.getElementById('ex-link').value = '';
-  document.getElementById('ex-cueing').value = '';
+  nameEl.value = '';
+  if (musEl) musEl.value = '';
+  if (linkEl) linkEl.value = '';
+  if (cueEl) cueEl.value = '';
   if (fileInput) fileInput.value = '';
   alert('🎉 动作保存成功！');
 }
 
 async function addLog(e) {
-  e.preventDefault();
-  const date = document.getElementById('log-date').value;
-  const type = document.getElementById('log-type').value;
-  const duration = document.getElementById('log-duration').value;
-  const note = document.getElementById('log-note').value;
+  if (e) e.preventDefault();
+  const dEl = document.getElementById('log-date');
+  const tEl = document.getElementById('log-type');
+  const durEl = document.getElementById('log-duration');
+  const nEl = document.getElementById('log-note');
   const fileInput = document.getElementById('log-image-input');
+
+  if (!dEl || !nEl) return;
+
+  const date = dEl.value;
+  const type = tEl ? tEl.value : '自主训练';
+  const duration = durEl ? durEl.value : '30';
+  const note = nEl.value;
 
   let img = '';
   if (fileInput && fileInput.files.length > 0) {
@@ -437,8 +459,8 @@ async function addLog(e) {
   renderCalendar();
   updateStats();
 
-  document.getElementById('log-duration').value = '';
-  document.getElementById('log-note').value = '';
+  if (durEl) durEl.value = '';
+  nEl.value = '';
   if (fileInput) fileInput.value = '';
   alert('🎉 日志保存成功！');
 }
