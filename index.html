@@ -231,4 +231,556 @@
             </div>
           </div>
           <div class="form-group">
-            <label for="log-note">心得/口令/感受记录：</
+            <label for="log-note">心得/口令/感受记录：</label>
+            <textarea id="log-note" rows="3" placeholder="记录今天带课体验、感受或者发现的学员代偿情况..." required></textarea>
+          </div>
+          <div class="form-group">
+            <label>上传训练/备课照片：</label>
+            <input type="file" id="log-image-input" accept="image/*">
+          </div>
+          <button type="submit" class="primary-btn">保存复盘日志</button>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top: 20px;">
+        <h3>📜 历史日志列表</h3>
+        <div id="log-history" style="margin-top: 15px;"></div>
+      </div>
+    </section>
+
+    <section id="sync" class="tab-content">
+      <h2>☁️ 多端数据同步配置</h2>
+      <div class="card">
+        <h3>🔑 设置你的同步密钥</h3>
+        <p class="subtitle">在电脑和手机上使用相同的【同步密钥】，即可实现两端数据互通。</p>
+        <div class="form-group">
+          <label>专属同步密钥 (比如你的手机号或自定义口令)：</label>
+          <input type="text" id="sync-key-input" placeholder="例：my_pilates_123456">
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+          <button class="primary-btn" onclick="saveSyncKey()">保存密钥并立即拉取云端数据</button>
+          <button class="toggle-btn" onclick="uploadDataToCloud()">手动同步本地到云端</button>
+        </div>
+        <p id="sync-status" style="margin-top: 15px; font-weight: bold; color: var(--primary-color);"></p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // ⚙️ 修改后的正确 Supabase 地址
+    const SUPABASE_URL = 'https://wdhjcdwfebvdynyatulz.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_mzfGli751oRDZ2RBYHg6DA_iY886JTH';
+    
+    let supabase = null;
+    try {
+      if (SUPABASE_URL && window.supabase) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+    } catch (e) {
+      console.error('Supabase 初始化异常:', e);
+    }
+
+    let currentMode = 'home';
+    let tasks = [];
+    let logs = JSON.parse(localStorage.getItem('pilates_logs') || '[]');
+    let customExerciseLib = JSON.parse(localStorage.getItem('pilates_custom_lib') || '[]');
+    let studyNotes = JSON.parse(localStorage.getItem('pilates_study_notes') || '[]');
+    let syncKey = localStorage.getItem('pilates_sync_key') || '';
+
+    const modeConfigs = {
+      home: { title: "🏠 工作日·居家模式 (随机挑选4项)", desc: "适合居家无器械或小器械的高效练习。" },
+      studio: { title: "🧘‍♀️ 工作日·馆课观察与实践模式", desc: "适合在普拉提馆跟课、观摩教练口令及实操复盘。" },
+      weekend: { title: "⏳ 周末·深度研习模式", desc: "针对解剖细节、动作原理和编排逻辑进行深度拆解。" }
+    };
+
+    const homeTaskPool = [
+      "胸椎放松与呼吸激活 (5min)", "猫牛式与脊柱逐节动员 (5min)",
+      "死虫式腹横肌激活 (20次)", "百次呼吸 (The Hundred) (100次)",
+      "单腿伸展与双腿伸展 (各10次)", "臀桥核心稳定训练 (15次)",
+      "侧卧腿系列 - 臀中肌激活 (各15次)", "天鹅展翅 - 脊柱后伸 (8次)"
+    ];
+
+    window.onload = function() {
+      const today = new Date().toISOString().split('T')[0];
+      const logDateInput = document.getElementById('log-date');
+      if (logDateInput) logDateInput.value = today;
+
+      if (syncKey) {
+        document.getElementById('sync-key-input').value = syncKey;
+        downloadDataFromCloud();
+      }
+
+      setMode('home');
+      renderCalendar();
+      renderLibrary();
+      renderLogs();
+      renderStudyNotes();
+    };
+
+    // ☁️ 云端数据同步逻辑
+    async function saveSyncKey() {
+      const inputVal = document.getElementById('sync-key-input').value.trim();
+      if (!inputVal) {
+        alert('请输入有效的同步密钥！');
+        return;
+      }
+      syncKey = inputVal;
+      localStorage.setItem('pilates_sync_key', syncKey);
+      await downloadDataFromCloud();
+    }
+
+    async function uploadDataToCloud() {
+      if (!supabase) {
+        alert('请先配置正确的 Supabase 信息！');
+        return;
+      }
+      if (!syncKey) {
+        alert('请先设置同步密钥！');
+        return;
+      }
+
+      const allData = {
+        logs,
+        customExerciseLib,
+        studyNotes
+      };
+
+      document.getElementById('sync-status').innerText = '⏳ 正在同步到云端...';
+      const { error } = await supabase
+        .from('user_data')
+        .upsert({ id: syncKey, content: allData, updated_at: new Date() });
+
+      if (error) {
+        document.getElementById('sync-status').innerText = '❌ 同步失败：' + error.message;
+      } else {
+        document.getElementById('sync-status').innerText = '✅ 云端数据同步成功！';
+      }
+    }
+
+    async function downloadDataFromCloud() {
+      if (!supabase || !syncKey) return;
+
+      document.getElementById('sync-status').innerText = '⏳ 正在从云端获取最新数据...';
+      const { data, error } = await supabase
+        .from('user_data')
+        .select('content')
+        .eq('id', syncKey)
+        .single();
+
+      if (error) {
+        document.getElementById('sync-status').innerText = '⚠️ 云端未找到此密钥的数据，您可以点击“手动同步”创建。';
+      } else if (data && data.content) {
+        logs = data.content.logs || [];
+        customExerciseLib = data.content.customExerciseLib || [];
+        studyNotes = data.content.studyNotes || [];
+
+        localStorage.setItem('pilates_logs', JSON.stringify(logs));
+        localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
+        localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
+
+        renderCalendar();
+        renderLibrary();
+        renderLogs();
+        renderStudyNotes();
+        document.getElementById('sync-status').innerText = '✅ 云端最新数据已同步到本地！';
+      }
+    }
+
+    // 自动保存与同步函数
+    function saveDataAndSync() {
+      localStorage.setItem('pilates_logs', JSON.stringify(logs));
+      localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
+      localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
+      if (supabase && syncKey) {
+        uploadDataToCloud();
+      }
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+
+      const targetTab = document.getElementById(tabId);
+      if (targetTab) targetTab.classList.add('active');
+
+      const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(
+        btn => btn.getAttribute('onclick').includes(`'${tabId}'`)
+      );
+      if (activeBtn) activeBtn.classList.add('active');
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(`btn-mode-${mode}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      document.getElementById('mode-title').innerText = modeConfigs[mode].title;
+      document.getElementById('mode-desc').innerText = modeConfigs[mode].desc;
+
+      if (mode === 'home') {
+        const shuffled = [...homeTaskPool].sort(() => 0.5 - Math.random());
+        tasks = shuffled.slice(0, 4).map(text => ({ text, completed: false }));
+      } else if (mode === 'studio') {
+        tasks = [
+          { text: "记录上课教练的精妙 Cueing 口令 2 条", completed: false },
+          { text: "观察学员常见代偿部位及纠正手法", completed: false },
+          { text: "整理一个大器械 (Reformer) 组合动作", completed: false }
+        ];
+      } else {
+        tasks = [
+          { text: "研习 1 个难点动作的解剖与骨骼对齐", completed: false },
+          { text: "自行编排并录制一段 15 分钟的垫上/器械序列", completed: false },
+          { text: "撰写本周体态评估与复盘日志", completed: false }
+        ];
+      }
+      renderTasks();
+    }
+
+    function renderTasks() {
+      const list = document.getElementById('task-list');
+      list.innerHTML = '';
+      let completedCount = 0;
+
+      tasks.forEach((task, idx) => {
+        if (task.completed) completedCount++;
+        const li = document.createElement('li');
+        li.className = `task-item ${task.completed ? 'completed' : ''}`;
+        li.innerHTML = `
+          <span>${task.text}</span>
+          <button class="toggle-btn" onclick="toggleTask(${idx})">${task.completed ? '✓ 已完成' : '未完成'}</button>
+        `;
+        list.appendChild(li);
+      });
+
+      document.getElementById('today-progress').innerText = `${completedCount}/${tasks.length}`;
+    }
+
+    function toggleTask(index) {
+      tasks[index].completed = !tasks[index].completed;
+      renderTasks();
+    }
+
+    function addCustomTask() {
+      const input = document.getElementById('new-task-input');
+      const val = input.value.trim();
+      if (val) {
+        tasks.push({ text: val, completed: false });
+        input.value = '';
+        renderTasks();
+      }
+    }
+
+    // ⏱️ 计时器逻辑
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let isTimerRunning = false;
+
+    function updateTimerDisplay() {
+      const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+      const secs = String(timerSeconds % 60).padStart(2, '0');
+      document.getElementById('timer-display').innerText = `${mins}:${secs}`;
+    }
+
+    function setTimerPreset(sec) {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      document.getElementById('timer-start-btn').innerText = '▶ 开始';
+      timerSeconds = sec;
+      updateTimerDisplay();
+    }
+
+    function toggleTimer() {
+      const btn = document.getElementById('timer-start-btn');
+      if (isTimerRunning) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        btn.innerText = '▶ 继续';
+      } else {
+        if (timerSeconds <= 0) return;
+        isTimerRunning = true;
+        btn.innerText = '❚❚ 暂停';
+        timerInterval = setInterval(() => {
+          if (timerSeconds > 0) {
+            timerSeconds--;
+            updateTimerDisplay();
+          } else {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            btn.innerText = '▶ 开始';
+            alert('⏱️ 计时结束！');
+          }
+        }, 1000);
+      }
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      timerSeconds = 0;
+      document.getElementById('timer-start-btn').innerText = '▶ 开始';
+      updateTimerDisplay();
+    }
+
+    // 🗓️ 打卡日历
+    let calDate = new Date();
+
+    function renderCalendar() {
+      const year = calDate.getFullYear();
+      const month = calDate.getMonth();
+      document.getElementById('calendar-month-year').innerText = `${year} 年 ${month + 1} 月`;
+
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'calendar-day empty';
+        grid.appendChild(emptyCell);
+      }
+
+      let checkinDays = 0;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day';
+        cell.innerText = d;
+
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const hasLog = logs.some(log => log.date === dateStr);
+
+        if (hasLog) {
+          cell.classList.add('has-checkin');
+          checkinDays++;
+        }
+
+        cell.onclick = () => showDayDetail(dateStr);
+        grid.appendChild(cell);
+      }
+
+      document.getElementById('month-checkin-count').innerText = `${checkinDays} 天`;
+    }
+
+    function changeMonth(delta) {
+      calDate.setMonth(calDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    function showDayDetail(dateStr) {
+      const dayLogs = logs.filter(log => log.date === dateStr);
+      const card = document.getElementById('day-detail-card');
+      const content = document.getElementById('detail-content');
+
+      document.getElementById('detail-date-title').innerText = `📅 ${dateStr} 记录与补卡`;
+
+      let html = '';
+      if (dayLogs.length > 0) {
+        html += dayLogs.map(l => `
+          <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
+            <p><strong>类型：</strong> ${l.type} (${l.duration} 分钟)</p>
+            <p><strong>心得：</strong> ${l.note}</p>
+            ${l.img ? `<img src="${l.img}" class="img-preview">` : ''}
+          </div>
+        `).join('');
+      } else {
+        html += `<p style="color: #777; margin-bottom: 12px;">该日期暂无打卡记录。</p>`;
+      }
+
+      html += `
+        <div style="margin-top: 15px; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px dashed #6895e9;">
+          <h4 style="margin-bottom: 10px; color: var(--primary-color);">➕ 为 ${dateStr} 补打卡</h4>
+          <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+            <select id="quick-log-type" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc;">
+              <option value="居家自主">居家自主</option>
+              <option value="馆课体验/观察">馆课体验/观察</option>
+              <option value="备课记录">备课记录</option>
+            </select>
+            <input type="number" id="quick-log-duration" placeholder="时长(分钟)" value="30" style="width: 110px; padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc;">
+          </div>
+          <textarea id="quick-log-note" rows="2" placeholder="输入本次补打卡的训练内容或心得..." style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 10px; box-sizing: border-box;"></textarea>
+          <button class="small-btn" onclick="quickCheckin('${dateStr}')">提交补卡</button>
+        </div>
+      `;
+
+      content.innerHTML = html;
+      card.style.display = 'block';
+    }
+
+    function quickCheckin(dateStr) {
+      const type = document.getElementById('quick-log-type').value;
+      const duration = document.getElementById('quick-log-duration').value || 30;
+      const note = document.getElementById('quick-log-note').value.trim();
+
+      if (!note) {
+        alert('请先填写打卡心得/训练内容！');
+        return;
+      }
+
+      logs.unshift({ date: dateStr, type, duration, note, img: '' });
+      saveDataAndSync();
+      renderCalendar();
+      renderLogs();
+      showDayDetail(dateStr);
+      alert(`✅ ${dateStr} 补打卡成功！`);
+    }
+
+    // 📖 动作库逻辑
+    function addNewExercise(e) {
+      e.preventDefault();
+      const name = document.getElementById('ex-name').value;
+      const category = document.getElementById('ex-category').value;
+      const muscle = document.getElementById('ex-muscle').value;
+      const cueing = document.getElementById('ex-cueing').value;
+      const link = document.getElementById('ex-link').value;
+      const fileInput = document.getElementById('ex-image-input');
+
+      const save = (imgData = '') => {
+        customExerciseLib.push({ name, category, muscle, cueing, link, img: imgData });
+        saveDataAndSync();
+        renderLibrary();
+        e.target.reset();
+        alert('✅ 动作添加成功！');
+      };
+
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(evt) { save(evt.target.result); };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        save();
+      }
+    }
+
+    function renderLibrary() {
+      const container = document.getElementById('library-list');
+      container.innerHTML = '';
+      
+      const defaultLib = [
+        { name: "百次呼吸 (The Hundred)", category: "垫上 (Mat)", muscle: "腹直肌、腹横肌", cueing: "双手快速拍打，吸气5秒，呼气5秒。" },
+        { name: "脚踏系列 (Footwork)", category: "普拉提床 (Reformer)", muscle: "股四头肌、腘绳肌、臀肌", cueing: "保持骨盆中立位，双脚踩稳脚棒。" }
+      ];
+
+      const all = [...defaultLib, ...customExerciseLib];
+      all.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'action-card';
+        card.innerHTML = `
+          <h4>${item.name}</h4>
+          <span class="tag">${item.category}</span>
+          <p><strong>目标肌群：</strong>${item.muscle}</p>
+          <p><strong>口令：</strong>${item.cueing}</p>
+          ${item.link ? `<a href="${item.link}" target="_blank" class="video-link-btn">▶ 查看视频</a>` : ''}
+          ${item.img ? `<img src="${item.img}" class="img-preview">` : ''}
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // 💡 知识库笔记
+    function addStudyNote(e) {
+      e.preventDefault();
+      const title = document.getElementById('study-title').value;
+      const content = document.getElementById('study-content').value;
+      const fileInput = document.getElementById('study-image-input');
+      const date = new Date().toLocaleDateString();
+
+      const save = (imgData = '') => {
+        studyNotes.unshift({ title, content, date, img: imgData });
+        saveDataAndSync();
+        renderStudyNotes();
+        e.target.reset();
+        alert('📚 知识笔记保存成功！');
+      };
+
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(evt) { save(evt.target.result); };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        save();
+      }
+    }
+
+    function renderStudyNotes() {
+      const container = document.getElementById('study-notes-list');
+      if (!container) return;
+      if (studyNotes.length === 0) {
+        container.innerHTML = `<p style="color: #777; grid-column: 1/-1;">暂无自建知识笔记，快在上面添加一条吧！</p>`;
+        return;
+      }
+      container.innerHTML = studyNotes.map(note => `
+        <div class="action-card" style="border-left-color: #3b82f6;">
+          <h4>${note.title}</h4>
+          <span class="tag" style="background: #eff6ff; color: #1d4ed8;">📅 ${note.date}</span>
+          <p style="white-space: pre-wrap; margin-top: 6px;">${note.content}</p>
+          ${note.img ? `<img src="${note.img}" class="img-preview">` : ''}
+        </div>
+      `).join('');
+    }
+
+    // ✍️ 复盘日志
+    function addLog(e) {
+      e.preventDefault();
+      const date = document.getElementById('log-date').value;
+      const type = document.getElementById('log-type').value;
+      const duration = document.getElementById('log-duration').value;
+      const note = document.getElementById('log-note').value;
+      const fileInput = document.getElementById('log-image-input');
+
+      const save = (imgData = '') => {
+        logs.unshift({ date, type, duration, note, img: imgData });
+        saveDataAndSync();
+        renderLogs();
+        renderCalendar();
+        e.target.reset();
+        document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+        alert('📝 日志保存成功！');
+      };
+
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(evt) { save(evt.target.result); };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        save();
+      }
+    }
+
+    function renderLogs() {
+      const container = document.getElementById('log-history');
+      if (!container) return;
+      container.innerHTML = logs.map(l => `
+        <div class="log-item">
+          <div class="log-header">
+            <span>📅 ${l.date} - ${l.type}</span>
+            <span>⏱️ ${l.duration} 分钟</span>
+          </div>
+          <p style="font-size: 0.95rem; color: #444;">${l.note}</p>
+          ${l.img ? `<img src="${l.img}" class="img-preview">` : ''}
+        </div>
+      `).join('');
+    }
+
+    function filterLibrary() {
+      const q = document.getElementById('lib-search-input').value.toLowerCase();
+      document.querySelectorAll('#library-list .action-card').forEach(card => {
+        card.style.display = card.innerText.toLowerCase().includes(q) ? 'block' : 'none';
+      });
+    }
+
+    function setCategoryFilter(cat, btn) {
+      document.querySelectorAll('#category-filter-btns .filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('#library-list .action-card').forEach(card => {
+        if (cat === 'ALL' || card.innerText.includes(cat)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>
