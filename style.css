@@ -3,7 +3,7 @@
   --primary-hover: #4b7bd8;
   --bg-color: #f4f8fb;
   --card-bg: #ffffff;
-  --text-color: #333333; /* 修复：正文文字颜色改回舒适的深灰，不再是刺眼浅蓝 */
+  --text-color: #333333;
   --border-radius: 12px;
   --shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
 }
@@ -24,12 +24,13 @@ body {
 }
 
 /* 🔒 确保所有可交互元素都能正常接收点击事件 */
-button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-btn {
+button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-btn, .small-btn, .primary-btn {
   pointer-events: auto !important;
   cursor: pointer;
   touch-action: manipulation; /* 优化移动端点击延迟 */
 }
 
+/* 顶部导航栏 */
 .navbar {
   background-color: var(--card-bg);
   padding: 1rem 1.5rem;
@@ -46,11 +47,15 @@ button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-
   font-size: 1.2rem;
   font-weight: bold;
   color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .nav-links {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .nav-btn {
@@ -69,6 +74,7 @@ button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-
   color: #ffffff !important;
 }
 
+/* 主容器与 Tab 切换 */
 .container {
   max-width: 900px;
   margin: 20px auto;
@@ -78,6 +84,7 @@ button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-
 .tab-content { 
   display: none; 
 }
+
 .tab-content.active { 
   display: block; 
 }
@@ -88,6 +95,7 @@ button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-
   margin-bottom: 16px;
 }
 
+/* 卡片容器通用样式 */
 .card, .welcome-card {
   background: var(--card-bg);
   padding: 20px;
@@ -96,6 +104,7 @@ button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-
   margin-bottom: 20px;
 }
 
+/* 模式选择器 */
 .mode-selector {
   display: flex;
   gap: 10px;
@@ -124,8 +133,9 @@ button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-
   box-shadow: 0 2px 8px rgba(104, 149, 233, 0.3);
 }
 
-.mode-btn:active, .nav-btn:active, .small-btn:active, .primary-btn:active {
-  transform: scale(0.98); /* 点击时的物理按压质感 */
+/* 按压交互质感 */
+.mode-btn:active, .nav-btn:active, .small-btn:active, .primary-btn:active, .toggle-btn:active {
+  transform: scale(0.98);
 }
 
 /* 动态任务添加输入框 */
@@ -162,6 +172,7 @@ button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-
   background: var(--primary-hover);
 }
 
+/* 任务列表 */
 .task-list {
   list-style: none;
 }
@@ -201,22 +212,97 @@ button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-
 }
 
 /* 打卡日历部分 */
-.calendar-card { text-align: center; }
-.calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.calendar-header button { background: none; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; color: var(--text-color); }
-.calendar-grid-header, .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-.calendar-grid-header { font-weight: bold; margin-bottom: 8px; color: #64748b; font-size: 0.85rem; }
-.calendar-day { padding: 12px 0; border-radius: 8px; background: #f8fafc; font-size: 0.9rem; position: relative; color: #334155; user-select: none; }
-.calendar-day.empty { background: transparent; cursor: default !important; }
-.calendar-day.has-checkin { background: #e0f2fe; font-weight: bold; color: #0284c7; }
-.calendar-day.has-checkin::after { content: "•"; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); color: var(--primary-color); font-size: 1.2rem; }
-.calendar-day:not(.empty):hover { background: #e2e8f0; }
+.calendar-card { 
+  text-align: center; 
+}
+
+.calendar-header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-bottom: 15px; 
+}
+
+.calendar-header button { 
+  background: none; 
+  border: 1px solid #cbd5e1; 
+  padding: 6px 12px; 
+  border-radius: 6px; 
+  color: var(--text-color); 
+}
+
+.calendar-grid-header, .calendar-grid { 
+  display: grid; 
+  grid-template-columns: repeat(7, 1fr); 
+  gap: 6px; 
+}
+
+.calendar-grid-header { 
+  font-weight: bold; 
+  margin-bottom: 8px; 
+  color: #64748b; 
+  font-size: 0.85rem; 
+}
+
+.calendar-day { 
+  padding: 12px 0; 
+  border-radius: 8px; 
+  background: #f8fafc; 
+  font-size: 0.9rem; 
+  position: relative; 
+  color: #334155; 
+  user-select: none; 
+  transition: background 0.15s;
+}
+
+.calendar-day.empty { 
+  background: transparent; 
+  cursor: default !important; 
+}
+
+.calendar-day.has-checkin { 
+  background: #e0f2fe; 
+  font-weight: bold; 
+  color: #0284c7; 
+}
+
+.calendar-day.has-checkin::after { 
+  content: "•"; 
+  position: absolute; 
+  bottom: 2px; 
+  left: 50%; 
+  transform: translateX(-50%); 
+  color: var(--primary-color); 
+  font-size: 1.2rem; 
+}
+
+.calendar-day:not(.empty):hover { 
+  background: #e2e8f0; 
+}
 
 /* 照片预览与视频链接按钮 */
-.img-preview { max-width: 100%; max-height: 220px; border-radius: 8px; margin-top: 10px; object-fit: cover; }
-.video-link-btn { display: inline-block; margin-top: 8px; font-size: 0.85rem; color: var(--primary-color); text-decoration: none; font-weight: bold; }
-.video-link-btn:hover { text-decoration: underline; }
+.img-preview { 
+  max-width: 100%; 
+  max-height: 220px; 
+  border-radius: 8px; 
+  margin-top: 10px; 
+  object-fit: cover; 
+}
 
+.video-link-btn { 
+  display: inline-block; 
+  margin-top: 8px; 
+  font-size: 0.85rem; 
+  color: var(--primary-color); 
+  text-decoration: none; 
+  font-weight: bold; 
+}
+
+.video-link-btn:hover { 
+  text-decoration: underline; 
+}
+
+/* 统计与网格区域 */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -238,7 +324,7 @@ button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-
   margin-top: 6px;
 }
 
-/* 动作库卡片列表 */
+/* 动作库 & 笔记卡片网格列表 */
 .grid-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -275,14 +361,19 @@ button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-
   margin-bottom: 6px;
 }
 
-/* 表单样式 */
+/* 表单通用样式 */
 .form-group-row {
   display: flex;
   gap: 16px;
 }
 
-.form-group-row .form-group { flex: 1; }
-.form-group { margin-bottom: 14px; }
+.form-group-row .form-group { 
+  flex: 1; 
+}
+
+.form-group { 
+  margin-bottom: 14px; 
+}
 
 .form-group label {
   display: block;
@@ -300,6 +391,7 @@ button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-
   font-size: 0.95rem;
   outline: none;
   background: #ffffff;
+  box-sizing: border-box;
 }
 
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
@@ -322,8 +414,19 @@ button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-
   background-color: var(--primary-hover);
 }
 
-.study-grid { display: flex; flex-direction: column; gap: 16px; }
-.links-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+/* 学习与日志样式 */
+.study-grid { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 16px; 
+}
+
+.links-grid { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 8px; 
+  margin-top: 10px; 
+}
 
 .resource-link {
   color: var(--primary-color);
@@ -335,7 +438,9 @@ button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-
   transition: background 0.2s;
 }
 
-.resource-link:hover { background: #e0f0ff; }
+.resource-link:hover { 
+  background: #e0f0ff; 
+}
 
 .log-item {
   background: var(--card-bg);
@@ -354,10 +459,34 @@ button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-
   margin-bottom: 8px;
 }
 
+/* 📱 移动端自适应优化 */
 @media (max-width: 600px) {
-  .navbar { flex-direction: column; gap: 12px; padding: 1rem; }
-  .mode-selector { flex-direction: column; }
-  .form-group-row { flex-direction: column; gap: 0; }
-  .nav-links { width: 100%; justify-content: space-around; }
-  .nav-btn { padding: 6px 10px; font-size: 0.85rem; }
+  .navbar { 
+    flex-direction: column; 
+    gap: 12px; 
+    padding: 1rem; 
+  }
+
+  .mode-selector { 
+    flex-direction: column; 
+  }
+
+  .form-group-row { 
+    flex-direction: column; 
+    gap: 0; 
+  }
+
+  .nav-links { 
+    width: 100%; 
+    justify-content: space-around; 
+  }
+
+  .nav-btn { 
+    padding: 6px 10px; 
+    font-size: 0.85rem; 
+  }
+
+  .calendar-day { 
+    padding: 8px 0; 
+  }
 }
