@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="普拉提">
 
-  <script src="https://cdn.staticfile.net/supabase-js/2.39.8/supabase.min.js"></script>
+  <script src="https://npm.elemecdn.com/@supabase/supabase-js@2"></script>
 
   <style>
     :root {
@@ -1223,42 +1223,72 @@
       if (supabase && syncKey) uploadDataToCloud();
     }
 
+    // 升级版云端同步逻辑（带精准诊断）
     async function saveSyncKey() {
       const inputVal = document.getElementById('sync-key-input')?.value.trim();
       if (!inputVal) return alert('请输入有效的同步密钥！');
       syncKey = inputVal;
       localStorage.setItem('pilates_sync_key', syncKey);
-      
-      if (!supabase) safeInitSupabase();
+
+      // 1. 检查 Supabase 脚本是否成功加载
+      if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
+        alert('❌ 诊断结果：Supabase 脚本库未加载成功（网络拦截）。\n建议：检查网络或更换浏览器再试。');
+        return;
+      }
+
+      // 2. 初始化 Supabase 客户端
+      if (!supabase) {
+        try {
+          supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+          alert('❌ 诊断结果：Supabase 初始化失败：' + e.message);
+          return;
+        }
+      }
+
       await downloadDataFromCloud();
     }
 
     async function uploadDataToCloud() {
-      if (!supabase && !safeInitSupabase()) {
-        return alert('本地离线模式：数据已保存在本机！');
+      if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
+        return alert('❌ 脚本未加载，无法连接云端！');
       }
       if (!syncKey) return alert('请先设置同步密钥！');
 
       safeSetText('sync-status', '⏳ 正在同步到云端...');
 
       try {
+        if (!supabase) supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
         const { error } = await supabase
           .from('user_data')
           .upsert({ id: syncKey, content: { logs, customExerciseLib, studyNotes }, updated_at: new Date() });
 
-        safeSetText('sync-status', error ? ('❌ 同步失败：' + error.message) : '✅ 云端数据同步成功！');
+        if (error) {
+          alert('❌ 云端连接失败，错误详情：\n' + error.message);
+          safeSetText('sync-status', '❌ 同步失败：' + error.message);
+        } else {
+          safeSetText('sync-status', '✅ 云端数据同步成功！');
+          alert('✅ 数据已成功同步到云端！');
+        }
       } catch (e) {
+        alert('❌ 网络请求异常：' + e.message);
         safeSetText('sync-status', '❌ 同步失败：网络连接受阻。');
       }
     }
 
     async function downloadDataFromCloud() {
-      if (!supabase && !safeInitSupabase()) return;
+      if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
+        safeSetText('sync-status', '⚠️ 离线模式：脚本库未加载');
+        return;
+      }
       if (!syncKey) return;
       
       safeSetText('sync-status', '⏳ 正在从云端获取数据...');
 
       try {
+        if (!supabase) supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         const { data, error } = await supabase
           .from('user_data')
           .select('content')
@@ -1266,7 +1296,8 @@
           .single();
 
         if (error) {
-          safeSetText('sync-status', '⚠️ 云端未找到此密钥的数据。');
+          alert('⚠️ 云端拉取结果：\n' + error.message);
+          safeSetText('sync-status', '⚠️ 云端未找到此密钥的数据或表未建立');
         } else if (data && data.content) {
           logs = data.content.logs || [];
           customExerciseLib = data.content.customExerciseLib || [];
@@ -1281,9 +1312,10 @@
           renderLogs();
           renderStudyNotes();
           safeSetText('sync-status', '✅ 云端最新数据已同步到本地！');
+          alert('✅ 已成功从云端拉取并同步最新数据！');
         }
       } catch (e) {
-        safeSetText('sync-status', '⚠️ 使用本地缓存数据。');
+        safeSetText('sync-status', '⚠️ 使用本地缓存数据');
       }
     }
   </script>
