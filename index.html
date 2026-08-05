@@ -10,9 +10,495 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="普拉提">
 
-  <link rel="stylesheet" href="style.css">
-  
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+  <style>
+    :root {
+      --primary-color: #6895e9;
+      --primary-hover: #4b7bd8;
+      --bg-color: #f4f8fb;
+      --card-bg: #ffffff;
+      --text-color: #333333;
+      --border-radius: 12px;
+      --shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      padding-bottom: 60px;
+    }
+
+    /* 🔒 确保所有可交互元素都能正常接收点击事件 */
+    button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-btn, .small-btn, .primary-btn {
+      pointer-events: auto !important;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    /* 顶部导航栏 */
+    .navbar {
+      background-color: var(--card-bg);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .logo {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      border-radius: 20px;
+      transition: all 0.2s ease;
+      color: #555;
+      font-weight: 500;
+    }
+
+    .nav-btn.active, .nav-btn:hover {
+      background-color: var(--primary-color);
+      color: #ffffff !important;
+    }
+
+    /* 主容器与 Tab 切换 */
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 0 16px;
+    }
+
+    .tab-content { 
+      display: none; 
+    }
+
+    .tab-content.active { 
+      display: block; 
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+
+    /* 卡片容器通用样式 */
+    .card, .welcome-card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+
+    /* 模式选择器 */
+    .mode-selector {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    .mode-btn {
+      flex: 1;
+      min-width: 180px;
+      padding: 12px;
+      border: 1.5px solid #e2e8f0;
+      background: #f8fafc;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      text-align: center;
+      color: #475569;
+    }
+
+    .mode-btn.active {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+      box-shadow: 0 2px 8px rgba(104, 149, 233, 0.3);
+    }
+
+    .mode-btn:active, .nav-btn:active, .small-btn:active, .primary-btn:active, .toggle-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* 动态任务添加输入框 */
+    .add-task-box {
+      display: flex;
+      gap: 8px;
+      margin: 15px 0;
+    }
+
+    .add-task-box input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      outline: none;
+      font-size: 0.95rem;
+    }
+
+    .add-task-box input:focus {
+      border-color: var(--primary-color);
+    }
+
+    .small-btn {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .small-btn:hover {
+      background: var(--primary-hover);
+    }
+
+    /* 任务列表 */
+    .task-list {
+      list-style: none;
+    }
+
+    .task-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .task-item span {
+      color: #334155;
+      font-size: 0.95rem;
+    }
+
+    .task-item.completed span {
+      text-decoration: line-through;
+      color: #94a3b8;
+    }
+
+    .toggle-btn {
+      background-color: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 6px 12px;
+      border-radius: 6px;
+      color: #475569;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .task-item.completed .toggle-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+
+    /* 打卡日历部分 */
+    .calendar-card { 
+      text-align: center; 
+    }
+
+    .calendar-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 15px; 
+    }
+
+    .calendar-header button { 
+      background: none; 
+      border: 1px solid #cbd5e1; 
+      padding: 6px 12px; 
+      border-radius: 6px; 
+      color: var(--text-color); 
+    }
+
+    .calendar-grid-header, .calendar-grid { 
+      display: grid; 
+      grid-template-columns: repeat(7, 1fr); 
+      gap: 6px; 
+    }
+
+    .calendar-grid-header { 
+      font-weight: bold; 
+      margin-bottom: 8px; 
+      color: #64748b; 
+      font-size: 0.85rem; 
+    }
+
+    .calendar-day { 
+      padding: 12px 0; 
+      border-radius: 8px; 
+      background: #f8fafc; 
+      font-size: 0.9rem; 
+      position: relative; 
+      color: #334155; 
+      user-select: none; 
+      transition: background 0.15s;
+    }
+
+    .calendar-day.empty { 
+      background: transparent; 
+      cursor: default !important; 
+    }
+
+    .calendar-day.has-checkin { 
+      background: #e0f2fe; 
+      font-weight: bold; 
+      color: #0284c7; 
+    }
+
+    .calendar-day.has-checkin::after { 
+      content: "•"; 
+      position: absolute; 
+      bottom: 2px; 
+      left: 50%; 
+      transform: translateX(-50%); 
+      color: var(--primary-color); 
+      font-size: 1.2rem; 
+    }
+
+    .calendar-day:not(.empty):hover { 
+      background: #e2e8f0; 
+    }
+
+    .img-preview { 
+      max-width: 100%; 
+      max-height: 220px; 
+      border-radius: 8px; 
+      margin-top: 10px; 
+      object-fit: cover; 
+    }
+
+    .video-link-btn { 
+      display: inline-block; 
+      margin-top: 8px; 
+      font-size: 0.85rem; 
+      color: var(--primary-color); 
+      text-decoration: none; 
+      font-weight: bold; 
+    }
+
+    .video-link-btn:hover { 
+      text-decoration: underline; 
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--primary-color);
+      margin-top: 6px;
+    }
+
+    .grid-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .action-card {
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .action-card h4 {
+      color: var(--primary-color);
+      margin-bottom: 6px;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #e0f2fe;
+      color: #0284c7;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    .action-card p {
+      font-size: 0.88rem;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+
+    .form-group-row {
+      display: flex;
+      gap: 16px;
+    }
+
+    .form-group-row .form-group { 
+      flex: 1; 
+    }
+
+    .form-group { 
+      margin-bottom: 14px; 
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+      color: #334155;
+      font-weight: 500;
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      outline: none;
+      background: #ffffff;
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--primary-color);
+    }
+
+    .primary-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      width: 100%;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .primary-btn:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .study-grid { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 16px; 
+    }
+
+    .links-grid { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 8px; 
+      margin-top: 10px; 
+    }
+
+    .resource-link {
+      color: var(--primary-color);
+      text-decoration: none;
+      padding: 10px 14px;
+      background: #f0f7ff;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+
+    .resource-link:hover { 
+      background: #e0f0ff; 
+    }
+
+    .log-item {
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--primary-color);
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    @media (max-width: 600px) {
+      .navbar { 
+        flex-direction: column; 
+        gap: 12px; 
+        padding: 1rem; 
+      }
+
+      .mode-selector { 
+        flex-direction: column; 
+      }
+
+      .form-group-row { 
+        flex-direction: column; 
+        gap: 0; 
+      }
+
+      .nav-links { 
+        width: 100%; 
+        justify-content: space-around; 
+      }
+
+      .nav-btn { 
+        padding: 6px 10px; 
+        font-size: 0.85rem; 
+      }
+
+      .calendar-day { 
+        padding: 8px 0; 
+      }
+    }
+  </style>
 </head>
 <body>
   <header class="navbar">
@@ -267,7 +753,13 @@
   </main>
 
   <script>
-    // ⚙️ Supabase 安全配置
+    // 安全赋值工具函数（防止 DOM 找不到导致的卡死）
+    function safeSetText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.innerText = text;
+    }
+
+    // 云端配置初始化
     const SUPABASE_URL = 'https://wdhjcdwfebvdynyatulz.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_mzfGli751oRDZ2RBYHg6DA_iY886JTH';
     let supabase = null;
@@ -279,15 +771,9 @@
           return true;
         }
       } catch (e) {
-        console.warn("Supabase 客户端初始化警告:", e);
+        console.warn("Supabase 加载超时，切入本地安全模式");
       }
       return false;
-    }
-
-    // 🛡️ 安全赋值工具函数（防止 null 崩溃）
-    function safeSetText(id, text) {
-      const el = document.getElementById(id);
-      if (el) el.innerText = text;
     }
 
     let currentMode = 'home';
@@ -310,7 +796,7 @@
       "侧卧腿系列 - 臀中肌激活 (各15次)", "天鹅展翅 - 脊柱后伸 (8次)"
     ];
 
-    // 🚀 确保 DOM 完全加载后再初始化
+    // 初始化入口
     document.addEventListener('DOMContentLoaded', () => {
       safeInitSupabase();
 
@@ -331,7 +817,7 @@
       renderStudyNotes();
     });
 
-    // 🏷️ 标签页切换逻辑
+    // 🏷️ 切换 Tab
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -341,8 +827,8 @@
 
       const navBtns = document.querySelectorAll('.nav-btn');
       navBtns.forEach(btn => {
-        const attr = btn.getAttribute('onclick');
-        if (attr && attr.includes(tabId)) {
+        const onClickAttr = btn.getAttribute('onclick');
+        if (onClickAttr && onClickAttr.includes(tabId)) {
           btn.classList.add('active');
         }
       });
@@ -350,7 +836,7 @@
       if (tabId === 'calendar') renderCalendar();
     }
 
-    // 🏋️ 模式设置
+    // 🏋️ 切换模式
     function setMode(mode) {
       currentMode = mode;
       document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
@@ -393,4 +879,413 @@
           <span>${task.text}</span>
           <button class="toggle-btn" onclick="toggleTask(${idx})">${task.completed ? '✓ 已完成' : '未完成'}</button>
         `;
-        list.appendChild(
+        list.appendChild(li);
+      });
+
+      safeSetText('today-progress', `${completedCount}/${tasks.length}`);
+    }
+
+    function toggleTask(index) {
+      if (tasks[index]) {
+        tasks[index].completed = !tasks[index].completed;
+        renderTasks();
+      }
+    }
+
+    function addCustomTask() {
+      const input = document.getElementById('new-task-input');
+      if (!input) return;
+      const val = input.value.trim();
+      if (val) {
+        tasks.push({ text: val, completed: false });
+        input.value = '';
+        renderTasks();
+      }
+    }
+
+    // ⏱️ 计时器
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let isTimerRunning = false;
+
+    function updateTimerDisplay() {
+      const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+      const secs = String(timerSeconds % 60).padStart(2, '0');
+      safeSetText('timer-display', `${mins}:${secs}`);
+    }
+
+    function setTimerPreset(sec) {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      safeSetText('timer-start-btn', '▶ 开始');
+      timerSeconds = sec;
+      updateTimerDisplay();
+    }
+
+    function toggleTimer() {
+      const btn = document.getElementById('timer-start-btn');
+      if (isTimerRunning) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        if (btn) btn.innerText = '▶ 继续';
+      } else {
+        if (timerSeconds <= 0) return alert('请先点击上面选择计时时间！');
+        isTimerRunning = true;
+        if (btn) btn.innerText = '❚❚ 暂停';
+        timerInterval = setInterval(() => {
+          if (timerSeconds > 0) {
+            timerSeconds--;
+            updateTimerDisplay();
+          } else {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            if (btn) btn.innerText = '▶ 开始';
+            alert('⏱️ 普拉提训练计时完成！');
+          }
+        }, 1000);
+      }
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      timerSeconds = 0;
+      safeSetText('timer-start-btn', '▶ 开始');
+      updateTimerDisplay();
+    }
+
+    // 🗓️ 打卡日历
+    let calDate = new Date();
+
+    function renderCalendar() {
+      const year = calDate.getFullYear();
+      const month = calDate.getMonth();
+      safeSetText('calendar-month-year', `${year} 年 ${month + 1} 月`);
+
+      const grid = document.getElementById('calendar-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'calendar-day empty';
+        grid.appendChild(emptyCell);
+      }
+
+      let checkinDays = 0;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day';
+        cell.innerText = d;
+
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const hasLog = logs.some(log => log.date === dateStr);
+
+        if (hasLog) {
+          cell.classList.add('has-checkin');
+          checkinDays++;
+        }
+
+        cell.onclick = () => showDayDetail(dateStr);
+        grid.appendChild(cell);
+      }
+
+      safeSetText('month-checkin-count', `${checkinDays} 天`);
+    }
+
+    function changeMonth(delta) {
+      calDate.setMonth(calDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    function showDayDetail(dateStr) {
+      const dayLogs = logs.filter(log => log.date === dateStr);
+      const card = document.getElementById('day-detail-card');
+      const content = document.getElementById('detail-content');
+      if (!card || !content) return;
+
+      safeSetText('detail-date-title', `📅 ${dateStr} 历史与补打卡`);
+
+      let html = '';
+      if (dayLogs.length > 0) {
+        html += dayLogs.map(l => `
+          <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
+            <p><strong>类型：</strong> ${l.type} (${l.duration} 分钟)</p>
+            <p><strong>心得：</strong> ${l.note}</p>
+            ${l.img ? `<img src="${l.img}" class="img-preview">` : ''}
+          </div>
+        `).join('');
+      } else {
+        html += `<p style="color: #777; margin-bottom: 12px;">该日期暂无记录。</p>`;
+      }
+
+      html += `
+        <div style="margin-top: 15px; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px dashed #6895e9;">
+          <h4 style="margin-bottom: 10px; color: var(--primary-color, #6895e9);">➕ 为 ${dateStr} 补打卡</h4>
+          <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+            <select id="quick-log-type" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc;">
+              <option value="居家自主">居家自主</option>
+              <option value="馆课体验/观察">馆课体验/观察</option>
+              <option value="备课记录">备课记录</option>
+            </select>
+            <input type="number" id="quick-log-duration" placeholder="时长(分钟)" value="30" style="width: 110px; padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc;">
+          </div>
+          <textarea id="quick-log-note" rows="2" placeholder="填写训练/备课心得..." style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 10px; box-sizing: border-box;"></textarea>
+          <button class="small-btn" onclick="quickCheckin('${dateStr}')">提交补打卡</button>
+        </div>
+      `;
+
+      content.innerHTML = html;
+      card.style.display = 'block';
+    }
+
+    function quickCheckin(dateStr) {
+      const type = document.getElementById('quick-log-type')?.value || '居家自主';
+      const duration = document.getElementById('quick-log-duration')?.value || 30;
+      const note = document.getElementById('quick-log-note')?.value.trim();
+
+      if (!note) return alert('请先填写打卡心得！');
+
+      logs.unshift({ date: dateStr, type, duration, note, img: '' });
+      saveDataAndSync();
+      renderCalendar();
+      renderLogs();
+      showDayDetail(dateStr);
+      alert(`✅ ${dateStr} 补打卡成功！`);
+    }
+
+    // 📖 动作库
+    function addNewExercise(e) {
+      e.preventDefault();
+      const name = document.getElementById('ex-name')?.value;
+      const category = document.getElementById('ex-category')?.value;
+      const muscle = document.getElementById('ex-muscle')?.value;
+      const cueing = document.getElementById('ex-cueing')?.value;
+      const link = document.getElementById('ex-link')?.value;
+      const fileInput = document.getElementById('ex-image-input');
+
+      const save = (imgData = '') => {
+        customExerciseLib.push({ name, category, muscle, cueing, link, img: imgData });
+        saveDataAndSync();
+        renderLibrary();
+        e.target.reset();
+        alert('✅ 动作卡片保存成功！');
+      };
+
+      if (fileInput && fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = evt => save(evt.target.result);
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        save();
+      }
+    }
+
+    function renderLibrary() {
+      const container = document.getElementById('library-list');
+      if (!container) return;
+      container.innerHTML = '';
+      
+      const defaultLib = [
+        { name: "百次呼吸 (The Hundred)", category: "垫上 (Mat)", muscle: "腹直肌、腹横肌", cueing: "双手快速拍打，吸气5秒，呼气5秒。" },
+        { name: "脚踏系列 (Footwork)", category: "普拉提床 (Reformer)", muscle: "股四头肌、腘绳肌、臀肌", cueing: "保持骨盆中立位，双脚踩稳脚棒。" }
+      ];
+
+      const all = [...defaultLib, ...customExerciseLib];
+      all.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'action-card';
+        card.innerHTML = `
+          <h4>${item.name}</h4>
+          <span class="tag">${item.category}</span>
+          <p><strong>目标肌群：</strong>${item.muscle}</p>
+          <p><strong>口令：</strong>${item.cueing}</p>
+          ${item.link ? `<a href="${item.link}" target="_blank" class="video-link-btn">▶ 查看视频</a>` : ''}
+          ${item.img ? `<img src="${item.img}" class="img-preview">` : ''}
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function filterLibrary() {
+      const q = document.getElementById('lib-search-input')?.value.toLowerCase() || '';
+      document.querySelectorAll('#library-list .action-card').forEach(card => {
+        card.style.display = card.innerText.toLowerCase().includes(q) ? 'block' : 'none';
+      });
+    }
+
+    function setCategoryFilter(cat, btn) {
+      document.querySelectorAll('#category-filter-btns .filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      document.querySelectorAll('#library-list .action-card').forEach(card => {
+        card.style.display = (cat === 'ALL' || card.innerText.includes(cat)) ? 'block' : 'none';
+      });
+    }
+
+    // 💡 知识库
+    function addStudyNote(e) {
+      e.preventDefault();
+      const title = document.getElementById('study-title')?.value;
+      const content = document.getElementById('study-content')?.value;
+      const fileInput = document.getElementById('study-image-input');
+      const date = new Date().toLocaleDateString();
+
+      const save = (imgData = '') => {
+        studyNotes.unshift({ title, content, date, img: imgData });
+        saveDataAndSync();
+        renderStudyNotes();
+        e.target.reset();
+        alert('📚 知识笔记保存成功！');
+      };
+
+      if (fileInput && fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = evt => save(evt.target.result);
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        save();
+      }
+    }
+
+    function renderStudyNotes() {
+      const container = document.getElementById('study-notes-list');
+      if (!container) return;
+      if (studyNotes.length === 0) {
+        container.innerHTML = `<p style="color: #777; grid-column: 1/-1;">暂无笔记，快记录下你的解剖或带课心得吧！</p>`;
+        return;
+      }
+      container.innerHTML = studyNotes.map(note => `
+        <div class="action-card" style="border-left-color: #3b82f6;">
+          <h4>${note.title}</h4>
+          <span class="tag" style="background: #eff6ff; color: #1d4ed8;">📅 ${note.date}</span>
+          <p style="white-space: pre-wrap; margin-top: 6px;">${note.content}</p>
+          ${note.img ? `<img src="${note.img}" class="img-preview">` : ''}
+        </div>
+      `).join('');
+    }
+
+    // ✍️ 复盘日志
+    function addLog(e) {
+      e.preventDefault();
+      const date = document.getElementById('log-date')?.value;
+      const type = document.getElementById('log-type')?.value;
+      const duration = document.getElementById('log-duration')?.value;
+      const note = document.getElementById('log-note')?.value;
+      const fileInput = document.getElementById('log-image-input');
+
+      const save = (imgData = '') => {
+        logs.unshift({ date, type, duration, note, img: imgData });
+        saveDataAndSync();
+        renderLogs();
+        renderCalendar();
+        e.target.reset();
+        const dateEl = document.getElementById('log-date');
+        if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+        alert('📝 复盘日志保存成功！');
+      };
+
+      if (fileInput && fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = evt => save(evt.target.result);
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        save();
+      }
+    }
+
+    function renderLogs() {
+      const container = document.getElementById('log-history');
+      if (!container) return;
+      if (logs.length === 0) {
+        container.innerHTML = '<p style="color:#888;">暂无历史日志。</p>';
+        return;
+      }
+      container.innerHTML = logs.map(l => `
+        <div class="log-item">
+          <div class="log-header">
+            <span>📅 ${l.date} - ${l.type}</span>
+            <span>⏱️ ${l.duration} 分钟</span>
+          </div>
+          <p style="font-size: 0.95rem; color: #444;">${l.note}</p>
+          ${l.img ? `<img src="${l.img}" class="img-preview">` : ''}
+        </div>
+      `).join('');
+    }
+
+    // 云同步本地保存
+    function saveDataAndSync() {
+      localStorage.setItem('pilates_logs', JSON.stringify(logs));
+      localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
+      localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
+      if (supabase && syncKey) uploadDataToCloud();
+    }
+
+    async function saveSyncKey() {
+      const inputVal = document.getElementById('sync-key-input')?.value.trim();
+      if (!inputVal) return alert('请输入有效的同步密钥！');
+      syncKey = inputVal;
+      localStorage.setItem('pilates_sync_key', syncKey);
+      
+      if (!supabase) safeInitSupabase();
+      await downloadDataFromCloud();
+    }
+
+    async function uploadDataToCloud() {
+      if (!supabase && !safeInitSupabase()) {
+        return alert('本地离线模式：数据已保存在本机！');
+      }
+      if (!syncKey) return alert('请先设置同步密钥！');
+
+      safeSetText('sync-status', '⏳ 正在同步到云端...');
+
+      try {
+        const { error } = await supabase
+          .from('user_data')
+          .upsert({ id: syncKey, content: { logs, customExerciseLib, studyNotes }, updated_at: new Date() });
+
+        safeSetText('sync-status', error ? ('❌ 同步失败：' + error.message) : '✅ 云端数据同步成功！');
+      } catch (e) {
+        safeSetText('sync-status', '❌ 同步失败：网络连接受阻。');
+      }
+    }
+
+    async function downloadDataFromCloud() {
+      if (!supabase && !safeInitSupabase()) return;
+      if (!syncKey) return;
+      
+      safeSetText('sync-status', '⏳ 正在从云端获取数据...');
+
+      try {
+        const { data, error } = await supabase
+          .from('user_data')
+          .select('content')
+          .eq('id', syncKey)
+          .single();
+
+        if (error) {
+          safeSetText('sync-status', '⚠️ 云端未找到此密钥的数据。');
+        } else if (data && data.content) {
+          logs = data.content.logs || [];
+          customExerciseLib = data.content.customExerciseLib || [];
+          studyNotes = data.content.studyNotes || [];
+
+          localStorage.setItem('pilates_logs', JSON.stringify(logs));
+          localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
+          localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
+
+          renderCalendar();
+          renderLibrary();
+          renderLogs();
+          renderStudyNotes();
+          safeSetText('sync-status', '✅ 云端最新数据已同步到本地！');
+        }
+      } catch (e) {
+        safeSetText('sync-status', '⚠️ 使用本地缓存数据。');
+      }
+    }
+  </script>
+</body>
+</html>
