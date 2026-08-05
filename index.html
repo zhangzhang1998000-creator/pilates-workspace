@@ -9,7 +9,6 @@
   <meta name="theme-color" content="#6895e9">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="普拉提">
-  <link rel="apple-touch-icon" href="/icon.png">
 
   <link rel="stylesheet" href="style.css">
   
@@ -256,7 +255,7 @@
         <p class="subtitle">在电脑和手机上使用相同的【同步密钥】，即可实现两端数据互通。</p>
         <div class="form-group">
           <label>专属同步密钥 (比如你的手机号或自定义口令)：</label>
-          <input type="text" id="sync-key-input" placeholder="例：zhangmin">
+          <input type="text" id="sync-key-input" placeholder="例：my_pilates_key">
         </div>
         <div style="display: flex; gap: 10px; margin-top: 15px;">
           <button class="primary-btn" onclick="saveSyncKey()">保存密钥并立即拉取云端数据</button>
@@ -268,22 +267,21 @@
   </main>
 
   <script>
-    // ⚙️ Supabase 安全初始化
+    // ⚙️ Supabase 安全配置
     const SUPABASE_URL = 'https://wdhjcdwfebvdynyatulz.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_mzfGli751oRDZ2RBYHg6DA_iY886JTH';
-    
     let supabase = null;
-    function initSupabaseClient() {
+
+    function safeInitSupabase() {
       try {
         if (window.supabase && typeof window.supabase.createClient === 'function') {
           supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-          console.log('✅ Supabase 客户端连接成功');
-        } else {
-          console.warn('⚠️ window.supabase SDK 未加载成功');
+          return true;
         }
       } catch (e) {
-        console.warn('Supabase 初始化跳过（将使用本地离线存储）:', e);
+        console.warn("Supabase 客户端初始化警告:", e);
       }
+      return false;
     }
 
     let currentMode = 'home';
@@ -306,8 +304,15 @@
       "侧卧腿系列 - 臀中肌激活 (各15次)", "天鹅展翅 - 脊柱后伸 (8次)"
     ];
 
-    window.addEventListener('DOMContentLoaded', () => {
-      initSupabaseClient();
+    // 安全渲染函数防崩溃处理
+    function safeSetText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.innerText = text;
+    }
+
+    // 页面安全初始化入口（解决 DOM 节点找不到的报错）
+    document.addEventListener('DOMContentLoaded', () => {
+      safeInitSupabase();
 
       const today = new Date().toISOString().split('T')[0];
       const logDateInput = document.getElementById('log-date');
@@ -351,10 +356,8 @@
       const activeBtn = document.getElementById(`btn-mode-${mode}`);
       if (activeBtn) activeBtn.classList.add('active');
 
-      const titleEl = document.getElementById('mode-title');
-      const descEl = document.getElementById('mode-desc');
-      if (titleEl) titleEl.innerText = modeConfigs[mode].title;
-      if (descEl) descEl.innerText = modeConfigs[mode].desc;
+      safeSetText('mode-title', modeConfigs[mode].title);
+      safeSetText('mode-desc', modeConfigs[mode].desc);
 
       if (mode === 'home') {
         const shuffled = [...homeTaskPool].sort(() => 0.5 - Math.random());
@@ -392,8 +395,7 @@
         list.appendChild(li);
       });
 
-      const progEl = document.getElementById('today-progress');
-      if (progEl) progEl.innerText = `${completedCount}/${tasks.length}`;
+      safeSetText('today-progress', `${completedCount}/${tasks.length}`);
     }
 
     function toggleTask(index) {
@@ -422,15 +424,13 @@
     function updateTimerDisplay() {
       const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
       const secs = String(timerSeconds % 60).padStart(2, '0');
-      const display = document.getElementById('timer-display');
-      if (display) display.innerText = `${mins}:${secs}`;
+      safeSetText('timer-display', `${mins}:${secs}`);
     }
 
     function setTimerPreset(sec) {
       clearInterval(timerInterval);
       isTimerRunning = false;
-      const btn = document.getElementById('timer-start-btn');
-      if (btn) btn.innerText = '▶ 开始';
+      safeSetText('timer-start-btn', '▶ 开始');
       timerSeconds = sec;
       updateTimerDisplay();
     }
@@ -442,7 +442,7 @@
         isTimerRunning = false;
         if (btn) btn.innerText = '▶ 继续';
       } else {
-        if (timerSeconds <= 0) return alert('请先设置选择计时时间！');
+        if (timerSeconds <= 0) return alert('请先选择计时时间！');
         isTimerRunning = true;
         if (btn) btn.innerText = '❚❚ 暂停';
         timerInterval = setInterval(() => {
@@ -463,8 +463,7 @@
       clearInterval(timerInterval);
       isTimerRunning = false;
       timerSeconds = 0;
-      const btn = document.getElementById('timer-start-btn');
-      if (btn) btn.innerText = '▶ 开始';
+      safeSetText('timer-start-btn', '▶ 开始');
       updateTimerDisplay();
     }
 
@@ -474,8 +473,7 @@
     function renderCalendar() {
       const year = calDate.getFullYear();
       const month = calDate.getMonth();
-      const mEl = document.getElementById('calendar-month-year');
-      if (mEl) mEl.innerText = `${year} 年 ${month + 1} 月`;
+      safeSetText('calendar-month-year', `${year} 年 ${month + 1} 月`);
 
       const grid = document.getElementById('calendar-grid');
       if (!grid) return;
@@ -508,8 +506,7 @@
         grid.appendChild(cell);
       }
 
-      const countEl = document.getElementById('month-checkin-count');
-      if (countEl) countEl.innerText = `${checkinDays} 天`;
+      safeSetText('month-checkin-count', `${checkinDays} 天`);
     }
 
     function changeMonth(delta) {
@@ -523,7 +520,7 @@
       const content = document.getElementById('detail-content');
       if (!card || !content) return;
 
-      document.getElementById('detail-date-title').innerText = `📅 ${dateStr} 记录与补卡`;
+      safeSetText('detail-date-title', `📅 ${dateStr} 记录与补卡`);
 
       let html = '';
       if (dayLogs.length > 0) {
@@ -559,9 +556,9 @@
     }
 
     function quickCheckin(dateStr) {
-      const type = document.getElementById('quick-log-type').value;
-      const duration = document.getElementById('quick-log-duration').value || 30;
-      const note = document.getElementById('quick-log-note').value.trim();
+      const type = document.getElementById('quick-log-type')?.value || '居家自主';
+      const duration = document.getElementById('quick-log-duration')?.value || 30;
+      const note = document.getElementById('quick-log-note')?.value.trim();
 
       if (!note) return alert('请先填写打卡心得/训练内容！');
 
@@ -627,7 +624,7 @@
     }
 
     function filterLibrary() {
-      const q = document.getElementById('lib-search-input').value.toLowerCase();
+      const q = document.getElementById('lib-search-input')?.value.toLowerCase() || '';
       document.querySelectorAll('#library-list .action-card').forEach(card => {
         card.style.display = card.innerText.toLowerCase().includes(q) ? 'block' : 'none';
       });
@@ -739,44 +736,39 @@
     }
 
     async function saveSyncKey() {
-      const inputVal = document.getElementById('sync-key-input').value.trim();
+      const inputVal = document.getElementById('sync-key-input')?.value.trim();
       if (!inputVal) return alert('请输入有效的同步密钥！');
       syncKey = inputVal;
       localStorage.setItem('pilates_sync_key', syncKey);
       
-      // 尝试重新初始化
-      if (!supabase) initSupabaseClient();
-
+      if (!supabase) safeInitSupabase();
       await downloadDataFromCloud();
     }
 
     async function uploadDataToCloud() {
-      if (!supabase) initSupabaseClient();
-      if (!supabase) return alert('当前处于离线存储模式（Supabase 库未成功加载），数据已妥善保存在本地浏览器中！');
+      if (!supabase && !safeInitSupabase()) {
+        return alert('当前处于离线存储模式（Supabase SDK 加载受阻），数据已妥善保存在本地！');
+      }
       if (!syncKey) return alert('请先设置同步密钥！');
 
-      const statusEl = document.getElementById('sync-status');
-      if (statusEl) statusEl.innerText = '⏳ 正在同步到云端...';
+      safeSetText('sync-status', '⏳ 正在同步到云端...');
 
       try {
         const { error } = await supabase
           .from('user_data')
           .upsert({ id: syncKey, content: { logs, customExerciseLib, studyNotes }, updated_at: new Date() });
 
-        if (statusEl) {
-          statusEl.innerText = error ? ('❌ 同步失败：' + error.message) : '✅ 云端数据同步成功！';
-        }
+        safeSetText('sync-status', error ? ('❌ 同步失败：' + error.message) : '✅ 云端数据同步成功！');
       } catch (e) {
-        if (statusEl) statusEl.innerText = '❌ 同步失败：网络连接受阻。';
+        safeSetText('sync-status', '❌ 同步失败：网络连接受阻。');
       }
     }
 
     async function downloadDataFromCloud() {
-      if (!supabase) initSupabaseClient();
-      if (!supabase || !syncKey) return;
+      if (!supabase && !safeInitSupabase()) return;
+      if (!syncKey) return;
       
-      const statusEl = document.getElementById('sync-status');
-      if (statusEl) statusEl.innerText = '⏳ 正在从云端获取最新数据...';
+      safeSetText('sync-status', '⏳ 正在从云端获取最新数据...');
 
       try {
         const { data, error } = await supabase
@@ -786,7 +778,7 @@
           .single();
 
         if (error) {
-          if (statusEl) statusEl.innerText = '⚠️ 云端未找到此密钥的数据，您可以点击“手动同步”创建。';
+          safeSetText('sync-status', '⚠️ 云端未找到此密钥的数据，您可以点击“手动同步”创建。');
         } else if (data && data.content) {
           logs = data.content.logs || [];
           customExerciseLib = data.content.customExerciseLib || [];
@@ -800,10 +792,10 @@
           renderLibrary();
           renderLogs();
           renderStudyNotes();
-          if (statusEl) statusEl.innerText = '✅ 云端最新数据已同步到本地！';
+          safeSetText('sync-status', '✅ 云端最新数据已同步到本地！');
         }
       } catch (e) {
-        if (statusEl) statusEl.innerText = '⚠️ 网络不畅，暂时使用本地缓存数据。';
+        safeSetText('sync-status', '⚠️ 网络不畅，暂时使用本地缓存数据。');
       }
     }
   </script>
