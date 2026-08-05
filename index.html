@@ -558,7 +558,7 @@
 
     <section id="calendar" class="tab-content">
       <h2>📅 锻炼打卡与历史回顾</h2>
-      <p class="subtitle">👉 点击日历上的<strong>任意日期</strong>均可查看详情或进行<strong>补打卡/编辑</strong>。</p>
+      <p class="subtitle">👉 点击日历上的<strong>任意日期</strong>均可查看详情或进行<strong>补打卡/再次编辑</strong>。</p>
       
       <div class="card calendar-card">
         <div class="calendar-header">
@@ -640,16 +640,39 @@
       <h2>📚 普拉提兼职/教培进阶知识库</h2>
 
       <div class="card" style="margin-bottom: 20px;">
-        <h3>✍️ 记录日常学习知识</h3>
-        <p class="subtitle">记录你的解剖心得、带课笔记或体态评估要点，支持上传图片。</p>
+        <h3>✍️ 记录日常学习知识与考题</h3>
+        <p class="subtitle">记录你的解剖心得、带课笔记或典型考题，可自由选择类型和卡片颜色！</p>
         <form onsubmit="addStudyNote(event)">
-          <div class="form-group">
-            <label>知识主题/标题：</label>
-            <input type="text" id="study-title" placeholder="例：骨盆前倾的肌肉失衡分析" required>
+          <div class="form-group-row">
+            <div class="form-group">
+              <label>知识主题/标题：</label>
+              <input type="text" id="study-title" placeholder="例：骨盆前倾的肌肉失衡分析" required>
+            </div>
+            <div class="form-group">
+              <label>知识类型：</label>
+              <select id="study-category">
+                <option value="日常学习">📖 日常学习</option>
+                <option value="典型考题">📝 典型考题</option>
+                <option value="解剖与体态">🦴 解剖与体态</option>
+                <option value="带课与口令">💡 带课与口令</option>
+                <option value="重点标记">⭐ 重点标记</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>卡片颜色：</label>
+              <select id="study-color">
+                <option value="#3b82f6">🟦 经典蓝</option>
+                <option value="#10b981">🟩 活力绿</option>
+                <option value="#f97316">🟧 警示橙 (考题推荐)</option>
+                <option value="#8b5cf6">🟪 优雅紫</option>
+                <option value="#ec4899">🟥 浪漫粉</option>
+              </select>
+            </div>
           </div>
+
           <div class="form-group">
             <label>知识要点/心得总结：</label>
-            <textarea id="study-content" rows="3" placeholder="记录学习到的原理、评估流程或触发点..." required></textarea>
+            <textarea id="study-content" rows="3" placeholder="记录学习到的原理、答题思路、评估流程或触发点..." required></textarea>
           </div>
           <div class="form-group">
             <label>上传知识卡片/解剖示意图/笔记照片：</label>
@@ -660,7 +683,7 @@
       </div>
 
       <div class="card" style="margin-bottom: 20px;">
-        <h3>📖 我的日常知识笔记</h3>
+        <h3>📖 我的日常知识笔记与考题</h3>
         <div id="study-notes-list" class="grid-list" style="margin-top: 15px;"></div>
       </div>
 
@@ -1131,12 +1154,14 @@
     function addStudyNote(e) {
       e.preventDefault();
       const title = document.getElementById('study-title')?.value;
+      const category = document.getElementById('study-category')?.value || '日常学习';
+      const color = document.getElementById('study-color')?.value || '#3b82f6';
       const content = document.getElementById('study-content')?.value;
       const fileInput = document.getElementById('study-image-input');
       const date = new Date().toLocaleDateString();
 
       const save = (imgData = '') => {
-        studyNotes.unshift({ title, content, date, img: imgData });
+        studyNotes.unshift({ title, category, color, content, date, img: imgData });
         saveDataAndSync();
         renderStudyNotes();
         e.target.reset();
@@ -1159,14 +1184,25 @@
         container.innerHTML = `<p style="color: #777; grid-column: 1/-1;">暂无笔记，快记录下你的解剖或带课心得吧！</p>`;
         return;
       }
-      container.innerHTML = studyNotes.map(note => `
-        <div class="action-card" style="border-left-color: #3b82f6;">
-          <h4>${note.title}</h4>
-          <span class="tag" style="background: #eff6ff; color: #1d4ed8;">📅 ${note.date}</span>
-          <p style="white-space: pre-wrap; margin-top: 6px;">${note.content}</p>
-          ${note.img ? `<img src="${note.img}" class="img-preview">` : ''}
-        </div>
-      `).join('');
+
+      container.innerHTML = studyNotes.map(note => {
+        const cardColor = note.color || '#3b82f6';
+        const categoryName = note.category || '日常学习';
+
+        return `
+          <div class="action-card" style="border-left: 5px solid ${cardColor};">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+              <h4 style="color: ${cardColor}; margin: 0;">${note.title}</h4>
+              <span class="tag" style="background: ${cardColor}15; color: ${cardColor}; border: 1px solid ${cardColor}30; margin: 0;">
+                ${categoryName}
+              </span>
+            </div>
+            <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 8px;">📅 ${note.date}</div>
+            <p style="white-space: pre-wrap; color: #334155; font-size: 0.92rem;">${note.content}</p>
+            ${note.img ? `<img src="${note.img}" class="img-preview">` : ''}
+          </div>
+        `;
+      }).join('');
     }
 
     function addLog(e) {
