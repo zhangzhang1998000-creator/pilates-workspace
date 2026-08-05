@@ -558,7 +558,7 @@
 
     <section id="calendar" class="tab-content">
       <h2>📅 锻炼打卡与历史回顾</h2>
-      <p class="subtitle">👉 点击日历上的<strong>任意日期</strong>均可查看详情或进行<strong>补打卡</strong>。</p>
+      <p class="subtitle">👉 点击日历上的<strong>任意日期</strong>均可查看详情或进行<strong>补打卡/编辑</strong>。</p>
       
       <div class="card calendar-card">
         <div class="calendar-header">
@@ -666,7 +666,7 @@
 
       <div class="study-grid">
         <div class="card">
-          <h3>🦴 1. 解剖学与体态评估</h3>
+          <h3>骨骼与解剖学学习</h3>
           <div class="links-grid">
             <a href="https://search.bilibili.com/all?keyword=普拉提解剖学3D" target="_blank" class="resource-link">📺 B站 3D解剖教学：骨盆中立位与脊柱活动度</a>
             <a href="https://search.bilibili.com/all?keyword=腹横肌激活" target="_blank" class="resource-link">🎬 核心深层肌群（腹横肌/盆底肌）激活讲解</a>
@@ -674,7 +674,7 @@
           </div>
         </div>
         <div class="card">
-          <h3>📋 2. 课程编排与授课逻辑</h3>
+          <h3>课程编排与授课逻辑</h3>
           <div class="links-grid">
             <a href="https://search.bilibili.com/all?keyword=普拉提Reformer序列" target="_blank" class="resource-link">📄 Reformer 大器械 45分钟小班课编排思路</a>
             <a href="https://search.bilibili.com/all?keyword=普拉提带课口令" target="_blank" class="resource-link">💡 教练口令 Cueing 技巧：让学员精准发力</a>
@@ -747,7 +747,6 @@
       if (el) el.innerText = text;
     }
 
-    // ⚡️ 原生直接 Rest API 通信（不拉取任何外网 .js 库）
     const SUPABASE_URL = 'https://wdhjcdwfebvdynyatulz.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_mzfGli751oRDZ2RBYHg6DA_iY886JTH';
 
@@ -975,19 +974,11 @@
       const content = document.getElementById('detail-content');
       if (!card || !content) return;
 
-      safeSetText('detail-date-title', `📅 ${dateStr} 历史与补打卡`);
-
-      function showDayDetail(dateStr) {
-      const dayLogs = logs.filter(log => log.date === dateStr);
-      const card = document.getElementById('day-detail-card');
-      const content = document.getElementById('detail-content');
-      if (!card || !content) return;
-
       safeSetText('detail-date-title', `📅 ${dateStr} 历史记录与编辑`);
 
       let html = '';
       if (dayLogs.length > 0) {
-        html += dayLogs.map((l, index) => {
+        html += dayLogs.map((l) => {
           const realIndex = logs.findIndex(item => item === l);
           return `
             <div style="padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 12px; background: #ffffff;">
@@ -1069,46 +1060,7 @@
       renderLogs();
       showDayDetail(dateStr);
     }
-      if (!targetLog) return;
 
-      document.getElementById('edit-log-index').value = index;
-      document.getElementById('quick-log-type').value = targetLog.type;
-      document.getElementById('quick-log-duration').value = targetLog.duration;
-      document.getElementById('quick-log-note').value = targetLog.note;
-
-      safeSetText('quick-form-title', `✏️ 正在修改/补充 ${dateStr} 的记录`);
-      safeSetText('quick-submit-btn', '💾 保存修改');
-      
-      const cancelBtn = document.getElementById('quick-cancel-btn');
-      if (cancelBtn) cancelBtn.style.display = 'inline-block';
-
-      document.getElementById('quick-form-title')?.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    // 升级：支持新增与保存编辑
-    function quickCheckin(dateStr) {
-      const editIndex = parseInt(document.getElementById('edit-log-index')?.value || '-1', 10);
-      const type = document.getElementById('quick-log-type')?.value || '居家自主';
-      const duration = document.getElementById('quick-log-duration')?.value || 30;
-      const note = document.getElementById('quick-log-note')?.value.trim();
-
-      if (!note) return alert('请先填写打卡心得！');
-
-      if (editIndex >= 0 && logs[editIndex]) {
-        logs[editIndex].type = type;
-        logs[editIndex].duration = duration;
-        logs[editIndex].note = note;
-        alert(`✅ ${dateStr} 的打卡记录修改成功！`);
-      } else {
-        logs.unshift({ date: dateStr, type, duration, note, img: '' });
-        alert(`✅ ${dateStr} 打卡成功！`);
-      }
-
-      saveDataAndSync();
-      renderCalendar();
-      renderLogs();
-      showDayDetail(dateStr);
-    }
     function addNewExercise(e) {
       e.preventDefault();
       const name = document.getElementById('ex-name')?.value;
@@ -1271,7 +1223,6 @@
       if (syncKey) uploadDataToCloud();
     }
 
-    // ⚡️ 使用原生原生 API 直连 Supabase 云端
     async function saveSyncKey() {
       const inputVal = document.getElementById('sync-key-input')?.value.trim();
       if (!inputVal) return alert('请输入有效的同步密钥！');
@@ -1309,7 +1260,7 @@
         } else {
           const errText = await res.text();
           alert('❌ 云端同步出错：\n' + errText);
-          safeSetText('sync-status', '❌ 同步失败，详情查看弹窗');
+          safeSetText('sync-status', '❌ 同步失败');
         }
       } catch (e) {
         alert('❌ 网络请求失败：' + e.message);
