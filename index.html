@@ -10,8 +10,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="普拉提">
 
-  <script src="https://npm.elemecdn.com/@supabase/supabase-js@2"></script>
-
+  <script src="https://cdn.bootcdn.net/ajax/libs/supabase-js/2.39.8/supabase.min.js" crossorigin="anonymous"></script>
+<script>
+  // 如果 BootCDN 被拦截，自动降级备用加载
+  if (typeof window.supabase === 'undefined') {
+    document.write('<script src="https://lib.baomitu.com/supabase-js/2.39.8/supabase.min.js"><\/script>');
+  }
+</script>
   <style>
     :root {
       --primary-color: #6895e9;
