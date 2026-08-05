@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pilates Workspace | 普拉提教练全能工作台</title>
-  
   <meta name="theme-color" content="#6895e9">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="普拉提">
@@ -90,13 +89,8 @@
       padding: 0 16px;
     }
 
-    .tab-content { 
-      display: none; 
-    }
-
-    .tab-content.active { 
-      display: block; 
-    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
 
     .subtitle {
       color: #666;
@@ -140,10 +134,6 @@
       box-shadow: 0 2px 8px rgba(104, 149, 233, 0.3);
     }
 
-    .mode-btn:active, .nav-btn:active, .small-btn:active, .primary-btn:active, .toggle-btn:active {
-      transform: scale(0.98);
-    }
-
     .add-task-box {
       display: flex;
       gap: 8px;
@@ -159,10 +149,6 @@
       font-size: 0.95rem;
     }
 
-    .add-task-box input:focus {
-      border-color: var(--primary-color);
-    }
-
     .small-btn {
       background: var(--primary-color);
       color: white;
@@ -173,25 +159,15 @@
       transition: background 0.2s;
     }
 
-    .small-btn:hover {
-      background: var(--primary-hover);
-    }
+    .small-btn:hover { background: var(--primary-hover); }
 
-    .task-list {
-      list-style: none;
-    }
-
+    .task-list { list-style: none; }
     .task-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 12px;
       border-bottom: 1px solid #f1f5f9;
-    }
-
-    .task-item span {
-      color: #334155;
-      font-size: 0.95rem;
     }
 
     .task-item.completed span {
@@ -206,7 +182,6 @@
       border-radius: 6px;
       color: #475569;
       font-size: 0.85rem;
-      transition: all 0.2s;
     }
 
     .task-item.completed .toggle-btn {
@@ -215,93 +190,54 @@
       border-color: var(--primary-color);
     }
 
-    .calendar-card { 
-      text-align: center; 
+    .calendar-card { text-align: center; }
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .calendar-header button { background: none; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; }
+
+    .calendar-grid-header, .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
     }
 
-    .calendar-header { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      margin-bottom: 15px; 
+    .calendar-grid-header { font-weight: bold; margin-bottom: 8px; color: #64748b; font-size: 0.85rem; }
+
+    .calendar-day {
+      padding: 12px 0;
+      border-radius: 8px;
+      background: #f8fafc;
+      font-size: 0.9rem;
+      position: relative;
+      color: #334155;
     }
 
-    .calendar-header button { 
-      background: none; 
-      border: 1px solid #cbd5e1; 
-      padding: 6px 12px; 
-      border-radius: 6px; 
-      color: var(--text-color); 
+    .calendar-day.empty { background: transparent; cursor: default !important; }
+    .calendar-day.has-checkin { background: #e0f2fe; font-weight: bold; color: #0284c7; }
+    .calendar-day.has-checkin::after {
+      content: "•";
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--primary-color);
+      font-size: 1.2rem;
     }
 
-    .calendar-grid-header, .calendar-grid { 
-      display: grid; 
-      grid-template-columns: repeat(7, 1fr); 
-      gap: 6px; 
+    .img-preview {
+      max-width: 100%;
+      max-height: 220px;
+      border-radius: 8px;
+      margin-top: 10px;
+      object-fit: cover;
     }
 
-    .calendar-grid-header { 
-      font-weight: bold; 
-      margin-bottom: 8px; 
-      color: #64748b; 
-      font-size: 0.85rem; 
-    }
-
-    .calendar-day { 
-      padding: 12px 0; 
-      border-radius: 8px; 
-      background: #f8fafc; 
-      font-size: 0.9rem; 
-      position: relative; 
-      color: #334155; 
-      user-select: none; 
-      transition: background 0.15s;
-    }
-
-    .calendar-day.empty { 
-      background: transparent; 
-      cursor: default !important; 
-    }
-
-    .calendar-day.has-checkin { 
-      background: #e0f2fe; 
-      font-weight: bold; 
-      color: #0284c7; 
-    }
-
-    .calendar-day.has-checkin::after { 
-      content: "•"; 
-      position: absolute; 
-      bottom: 2px; 
-      left: 50%; 
-      transform: translateX(-50%); 
-      color: var(--primary-color); 
-      font-size: 1.2rem; 
-    }
-
-    .calendar-day:not(.empty):hover { 
-      background: #e2e8f0; 
-    }
-
-    .img-preview { 
-      max-width: 100%; 
-      max-height: 220px; 
-      border-radius: 8px; 
-      margin-top: 10px; 
-      object-fit: cover; 
-    }
-
-    .video-link-btn { 
-      display: inline-block; 
-      margin-top: 8px; 
-      font-size: 0.85rem; 
-      color: var(--primary-color); 
-      text-decoration: none; 
-      font-weight: bold; 
-    }
-
-    .video-link-btn:hover { 
-      text-decoration: underline; 
+    .video-link-btn {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: bold;
     }
 
     .stats-grid {
@@ -336,44 +272,20 @@
       padding: 16px;
       border-radius: var(--border-radius);
       box-shadow: var(--shadow);
-      border-left: 4px solid var(--primary-color);
-    }
-
-    .action-card h4 {
-      color: var(--primary-color);
-      margin-bottom: 6px;
+      border-left: 5px solid var(--primary-color);
     }
 
     .tag {
       display: inline-block;
-      background: #e0f2fe;
-      color: #0284c7;
       font-size: 0.75rem;
       padding: 2px 8px;
       border-radius: 4px;
-      margin-bottom: 8px;
       font-weight: bold;
     }
 
-    .action-card p {
-      font-size: 0.88rem;
-      color: #475569;
-      margin-bottom: 6px;
-    }
-
-    .form-group-row {
-      display: flex;
-      gap: 16px;
-    }
-
-    .form-group-row .form-group { 
-      flex: 1; 
-    }
-
-    .form-group { 
-      margin-bottom: 14px; 
-    }
-
+    .form-group-row { display: flex; gap: 16px; }
+    .form-group-row .form-group { flex: 1; }
+    .form-group { margin-bottom: 14px; }
     .form-group label {
       display: block;
       margin-bottom: 6px;
@@ -390,11 +302,6 @@
       font-size: 0.95rem;
       outline: none;
       background: #ffffff;
-      box-sizing: border-box;
-    }
-
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-      border-color: var(--primary-color);
     }
 
     .primary-btn {
@@ -406,26 +313,12 @@
       width: 100%;
       font-size: 1rem;
       font-weight: 500;
-      transition: background 0.2s;
     }
 
-    .primary-btn:hover {
-      background-color: var(--primary-hover);
-    }
+    .primary-btn:hover { background-color: var(--primary-hover); }
 
-    .study-grid { 
-      display: flex; 
-      flex-direction: column; 
-      gap: 16px; 
-    }
-
-    .links-grid { 
-      display: flex; 
-      flex-direction: column; 
-      gap: 8px; 
-      margin-top: 10px; 
-    }
-
+    .study-grid { display: flex; flex-direction: column; gap: 16px; }
+    .links-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
     .resource-link {
       color: var(--primary-color);
       text-decoration: none;
@@ -433,11 +326,6 @@
       background: #f0f7ff;
       border-radius: 6px;
       font-size: 0.9rem;
-      transition: background 0.2s;
-    }
-
-    .resource-link:hover { 
-      background: #e0f0ff; 
     }
 
     .log-item {
@@ -458,34 +346,10 @@
     }
 
     @media (max-width: 600px) {
-      .navbar { 
-        flex-direction: column; 
-        gap: 12px; 
-        padding: 1rem; 
-      }
-
-      .mode-selector { 
-        flex-direction: column; 
-      }
-
-      .form-group-row { 
-        flex-direction: column; 
-        gap: 0; 
-      }
-
-      .nav-links { 
-        width: 100%; 
-        justify-content: space-around; 
-      }
-
-      .nav-btn { 
-        padding: 6px 10px; 
-        font-size: 0.85rem; 
-      }
-
-      .calendar-day { 
-        padding: 8px 0; 
-      }
+      .navbar { flex-direction: column; gap: 12px; padding: 1rem; }
+      .mode-selector, .form-group-row { flex-direction: column; gap: 0; }
+      .nav-links { width: 100%; justify-content: space-around; }
+      .nav-btn { padding: 6px 10px; font-size: 0.85rem; }
     }
   </style>
 </head>
@@ -516,12 +380,10 @@
       <div class="card">
         <h3 id="mode-title">📋 模式清单</h3>
         <p class="subtitle" id="mode-desc"></p>
-        
         <div class="add-task-box">
           <input type="text" id="new-task-input" placeholder="➕ 添加你今天的自定义训练任务/动作...">
           <button onclick="addCustomTask()" class="small-btn">添加</button>
         </div>
-
         <ul class="task-list" id="task-list"></ul>
       </div>
 
@@ -539,16 +401,13 @@
       <div class="card timer-card" style="text-align: center; margin-top: 20px;">
         <h3>⏱️ 普拉提专注计时器</h3>
         <p class="subtitle">适用于动作 Hold 住（如 Plank 支撑）或分段训练计时</p>
-        
-        <div style="font-size: 2.8rem; font-weight: bold; color: var(--primary-color, #6895e9); margin: 15px 0;" id="timer-display">00:00</div>
-        
+        <div style="font-size: 2.8rem; font-weight: bold; color: var(--primary-color); margin: 15px 0;" id="timer-display">00:00</div>
         <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap;">
           <button class="small-btn" onclick="setTimerPreset(30)">30 秒</button>
           <button class="small-btn" onclick="setTimerPreset(60)">60 秒</button>
           <button class="small-btn" onclick="setTimerPreset(180)">3 分钟</button>
           <button class="small-btn" onclick="setTimerPreset(300)">5 分钟</button>
         </div>
-
         <div style="display: flex; gap: 10px; justify-content: center;">
           <button class="primary-btn" style="width: auto; padding: 8px 24px;" id="timer-start-btn" onclick="toggleTimer()">▶ 开始</button>
           <button class="toggle-btn" style="padding: 8px 16px;" onclick="resetTimer()">↺ 重置</button>
@@ -640,9 +499,10 @@
       <h2>📚 普拉提兼职/教培进阶知识库</h2>
 
       <div class="card" style="margin-bottom: 20px;">
-        <h3>✍️ 记录日常学习知识与考题</h3>
-        <p class="subtitle">记录你的解剖心得、带课笔记或典型考题，可自由选择类型和卡片颜色！</p>
-        <form onsubmit="addStudyNote(event)">
+        <h3 id="study-form-title">✍️ 记录日常学习知识与考题</h3>
+        <p class="subtitle">记录你的解剖心得、带课笔记或典型考题。卡片会自动按相同颜色聚集展示！</p>
+        <form id="study-form" onsubmit="addStudyNote(event)">
+          <input type="hidden" id="edit-study-index" value="-1">
           <div class="form-group-row">
             <div class="form-group">
               <label>知识主题/标题：</label>
@@ -659,7 +519,7 @@
               </select>
             </div>
             <div class="form-group">
-              <label>卡片颜色：</label>
+              <label>卡片颜色 (自动归类聚拢)：</label>
               <select id="study-color">
                 <option value="#3b82f6">🟦 经典蓝</option>
                 <option value="#10b981">🟩 活力绿</option>
@@ -675,15 +535,18 @@
             <textarea id="study-content" rows="3" placeholder="记录学习到的原理、答题思路、评估流程或触发点..." required></textarea>
           </div>
           <div class="form-group">
-            <label>上传知识卡片/解剖示意图/笔记照片：</label>
+            <label>上传知识卡片/解剖示意图/笔记照片 (编辑时若重新选择文件则覆盖)：</label>
             <input type="file" id="study-image-input" accept="image/*">
           </div>
-          <button type="submit" class="primary-btn">保存知识笔记</button>
+          <div style="display: flex; gap: 10px;">
+            <button type="submit" class="primary-btn" id="study-submit-btn">保存知识笔记</button>
+            <button type="button" class="toggle-btn" id="study-cancel-btn" style="display: none;" onclick="resetStudyForm()">取消编辑</button>
+          </div>
         </form>
       </div>
 
       <div class="card" style="margin-bottom: 20px;">
-        <h3>📖 我的日常知识笔记与考题</h3>
+        <h3>📖 我的知识卡片 (同颜色自动排列)</h3>
         <div id="study-notes-list" class="grid-list" style="margin-top: 15px;"></div>
       </div>
 
@@ -759,7 +622,7 @@
           <button class="primary-btn" onclick="saveSyncKey()">保存密钥并拉取云端数据</button>
           <button class="toggle-btn" onclick="uploadDataToCloud()">手动同步本地到云端</button>
         </div>
-        <p id="sync-status" style="margin-top: 15px; font-weight: bold; color: var(--primary-color, #6895e9);"></p>
+        <p id="sync-status" style="margin-top: 15px; font-weight: bold; color: var(--primary-color);"></p>
       </div>
     </section>
   </main>
@@ -1006,7 +869,7 @@
           return `
             <div style="padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 12px; background: #ffffff;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <span style="font-weight: bold; color: var(--primary-color, #6895e9);">📌 ${l.type} (${l.duration} 分钟)</span>
+                <span style="font-weight: bold; color: var(--primary-color);">📌 ${l.type} (${l.duration} 分钟)</span>
                 <button class="small-btn" style="padding: 4px 10px; font-size: 0.8rem;" onclick="editLog(${realIndex}, '${dateStr}')">✏️ 编辑补充</button>
               </div>
               <p style="color: #334155; font-size: 0.95rem; white-space: pre-wrap;">${l.note}</p>
@@ -1020,7 +883,7 @@
 
       html += `
         <div style="margin-top: 15px; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px dashed #6895e9;">
-          <h4 id="quick-form-title" style="margin-bottom: 10px; color: var(--primary-color, #6895e9);">➕ 为 ${dateStr} 增加新记录</h4>
+          <h4 id="quick-form-title" style="margin-bottom: 10px; color: var(--primary-color);">➕ 为 ${dateStr} 增加新记录</h4>
           <input type="hidden" id="edit-log-index" value="-1">
           <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
             <select id="quick-log-type" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc;">
@@ -1056,7 +919,6 @@
       
       const cancelBtn = document.getElementById('quick-cancel-btn');
       if (cancelBtn) cancelBtn.style.display = 'inline-block';
-
       document.getElementById('quick-form-title')?.scrollIntoView({ behavior: 'smooth' });
     }
 
@@ -1126,8 +988,8 @@
         card.className = 'action-card';
         card.innerHTML = `
           <h4>${item.name}</h4>
-          <span class="tag">${item.category}</span>
-          <p><strong>目标肌群：</strong>${item.muscle}</p>
+          <span class="tag" style="background: #e0f2fe; color: #0284c7;">${item.category}</span>
+          <p style="margin-top: 6px;"><strong>目标肌群：</strong>${item.muscle}</p>
           <p><strong>口令：</strong>${item.cueing}</p>
           ${item.link ? `<a href="${item.link}" target="_blank" class="video-link-btn">▶ 查看视频</a>` : ''}
           ${item.img ? `<img src="${item.img}" class="img-preview">` : ''}
@@ -1153,6 +1015,7 @@
 
     function addStudyNote(e) {
       e.preventDefault();
+      const editIndex = parseInt(document.getElementById('edit-study-index')?.value || '-1', 10);
       const title = document.getElementById('study-title')?.value;
       const category = document.getElementById('study-category')?.value || '日常学习';
       const color = document.getElementById('study-color')?.value || '#3b82f6';
@@ -1161,11 +1024,25 @@
       const date = new Date().toLocaleDateString();
 
       const save = (imgData = '') => {
-        studyNotes.unshift({ title, category, color, content, date, img: imgData });
+        if (editIndex >= 0 && studyNotes[editIndex]) {
+          const originalImg = studyNotes[editIndex].img || '';
+          studyNotes[editIndex] = {
+            title,
+            category,
+            color,
+            content,
+            date: studyNotes[editIndex].date,
+            img: imgData || originalImg
+          };
+          alert('✏️ 知识卡片修改成功！');
+        } else {
+          studyNotes.unshift({ title, category, color, content, date, img: imgData });
+          alert('📚 知识笔记保存成功！');
+        }
+
         saveDataAndSync();
         renderStudyNotes();
-        e.target.reset();
-        alert('📚 知识笔记保存成功！');
+        resetStudyForm();
       };
 
       if (fileInput && fileInput.files && fileInput.files[0]) {
@@ -1177,15 +1054,50 @@
       }
     }
 
+    function editStudyNote(index) {
+      const note = studyNotes[index];
+      if (!note) return;
+
+      document.getElementById('edit-study-index').value = index;
+      document.getElementById('study-title').value = note.title || '';
+      document.getElementById('study-category').value = note.category || '日常学习';
+      document.getElementById('study-color').value = note.color || '#3b82f6';
+      document.getElementById('study-content').value = note.content || '';
+
+      safeSetText('study-form-title', '✏️ 编辑知识卡片与颜色');
+      safeSetText('study-submit-btn', '💾 保存修改');
+
+      const cancelBtn = document.getElementById('study-cancel-btn');
+      if (cancelBtn) cancelBtn.style.display = 'inline-block';
+
+      document.getElementById('study-form-title')?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function resetStudyForm() {
+      const form = document.getElementById('study-form');
+      if (form) form.reset();
+      document.getElementById('edit-study-index').value = '-1';
+      safeSetText('study-form-title', '✍️ 记录日常学习知识与考题');
+      safeSetText('study-submit-btn', '保存知识笔记');
+
+      const cancelBtn = document.getElementById('study-cancel-btn');
+      if (cancelBtn) cancelBtn.style.display = 'none';
+    }
+
     function renderStudyNotes() {
       const container = document.getElementById('study-notes-list');
       if (!container) return;
+
       if (studyNotes.length === 0) {
         container.innerHTML = `<p style="color: #777; grid-column: 1/-1;">暂无笔记，快记录下你的解剖或带课心得吧！</p>`;
         return;
       }
 
-      container.innerHTML = studyNotes.map(note => {
+      // 根据颜色聚类/排序 (相同颜色的卡片排在一起)
+      const sortedNotesWithIndex = studyNotes.map((note, index) => ({ note, index }));
+      sortedNotesWithIndex.sort((a, b) => (a.note.color || '#3b82f6').localeCompare(b.note.color || '#3b82f6'));
+
+      container.innerHTML = sortedNotesWithIndex.map(({ note, index }) => {
         const cardColor = note.color || '#3b82f6';
         const categoryName = note.category || '日常学习';
 
@@ -1193,11 +1105,14 @@
           <div class="action-card" style="border-left: 5px solid ${cardColor};">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
               <h4 style="color: ${cardColor}; margin: 0;">${note.title}</h4>
+              <button class="small-btn" style="padding: 2px 8px; font-size: 0.75rem; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;" onclick="editStudyNote(${index})">✏️ 编辑</button>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
               <span class="tag" style="background: ${cardColor}15; color: ${cardColor}; border: 1px solid ${cardColor}30; margin: 0;">
                 ${categoryName}
               </span>
+              <span style="font-size: 0.75rem; color: #94a3b8;">📅 ${note.date}</span>
             </div>
-            <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 8px;">📅 ${note.date}</div>
             <p style="white-space: pre-wrap; color: #334155; font-size: 0.92rem;">${note.content}</p>
             ${note.img ? `<img src="${note.img}" class="img-preview">` : ''}
           </div>
