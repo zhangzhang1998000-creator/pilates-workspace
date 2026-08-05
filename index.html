@@ -1021,7 +1021,108 @@
       saveDataAndSync();
       renderCalendar();
       renderLogs();
-      showDayDetail(dateStr);
+      // 1. 替换 showDayDetail 函数（增加了编辑按钮）
+function showDayDetail(dateStr) {
+  const dayLogs = logs.filter(log => log.date === dateStr);
+  const card = document.getElementById('day-detail-card');
+  const content = document.getElementById('detail-content');
+  if (!card || !content) return;
+
+  safeSetText('detail-date-title', `📅 ${dateStr} 历史记录与编辑`);
+
+  let html = '';
+  if (dayLogs.length > 0) {
+    html += dayLogs.map((l, index) => {
+      // 找到这条 log 在全局 logs 数组里的真实索引，方便精确修改
+      const realIndex = logs.findIndex(item => item === l);
+      return `
+        <div style="padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 12px; background: #ffffff;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-weight: bold; color: var(--primary-color, #6895e9);">📌 ${l.type} (${l.duration} 分钟)</span>
+            <button class="small-btn" style="padding: 4px 10px; font-size: 0.8rem;" onclick="editLog(${realIndex}, '${dateStr}')">✏️ 编辑补充</button>
+          </div>
+          <p style="color: #334155; font-size: 0.95rem; white-space: pre-wrap;">${l.note}</p>
+          ${l.img ? `<img src="${l.img}" class="img-preview">` : ''}
+        </div>
+      `;
+    }).join('');
+  } else {
+    html += `<p style="color: #777; margin-bottom: 12px;">该日期暂无记录。</p>`;
+  }
+
+  // 补打卡 / 新增记录区
+  html += `
+    <div style="margin-top: 15px; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px dashed #6895e9;">
+      <h4 id="quick-form-title" style="margin-bottom: 10px; color: var(--primary-color, #6895e9);">➕ 为 ${dateStr} 增加新记录</h4>
+      <input type="hidden" id="edit-log-index" value="-1">
+      <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+        <select id="quick-log-type" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc;">
+          <option value="居家自主">居家自主</option>
+          <option value="馆课体验/观察">馆课体验/观察</option>
+          <option value="备课记录">备课记录</option>
+        </select>
+        <input type="number" id="quick-log-duration" placeholder="时长(分钟)" value="30" style="width: 110px; padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc;">
+      </div>
+      <textarea id="quick-log-note" rows="3" placeholder="填写训练/备课心得..." style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 10px; box-sizing: border-box;"></textarea>
+      <div style="display: flex; gap: 8px;">
+        <button class="small-btn" id="quick-submit-btn" onclick="quickCheckin('${dateStr}')">提交打卡记录</button>
+        <button class="toggle-btn" id="quick-cancel-btn" style="display:none;" onclick="showDayDetail('${dateStr}')">取消编辑</button>
+      </div>
+    </div>
+  `;
+
+  content.innerHTML = html;
+  card.style.display = 'block';
+}
+
+// 2. 新增 editLog 函数（点击编辑时触发）
+function editLog(index, dateStr) {
+  const targetLog = logs[index];
+  if (!targetLog) return;
+
+  // 将要编辑的数据填入表单
+  document.getElementById('edit-log-index').value = index;
+  document.getElementById('quick-log-type').value = targetLog.type;
+  document.getElementById('quick-log-duration').value = targetLog.duration;
+  document.getElementById('quick-log-note').value = targetLog.note;
+
+  // 修改表单标题和按钮文字
+  safeSetText('quick-form-title', `✏️ 正在修改/补充 ${dateStr} 的记录`);
+  safeSetText('quick-submit-btn', '💾 保存修改');
+  
+  const cancelBtn = document.getElementById('quick-cancel-btn');
+  if (cancelBtn) cancelBtn.style.display = 'inline-block';
+
+  // 平滑滚动到编辑框位置
+  document.getElementById('quick-form-title')?.scrollIntoView({ behavior: 'smooth' });
+}
+
+// 3. 替换 quickCheckin 函数（兼容“新增”与“保存修改”）
+function quickCheckin(dateStr) {
+  const editIndex = parseInt(document.getElementById('edit-log-index')?.value || '-1', 10);
+  const type = document.getElementById('quick-log-type')?.value || '居家自主';
+  const duration = document.getElementById('quick-log-duration')?.value || 30;
+  const note = document.getElementById('quick-log-note')?.value.trim();
+
+  if (!note) return alert('请先填写打卡心得！');
+
+  if (editIndex >= 0 && logs[editIndex]) {
+    // 覆盖编辑已有记录
+    logs[editIndex].type = type;
+    logs[editIndex].duration = duration;
+    logs[editIndex].note = note;
+    alert(`✅ ${dateStr} 的打卡记录修改成功！`);
+  } else {
+    // 新增记录
+    logs.unshift({ date: dateStr, type, duration, note, img: '' });
+    alert(`✅ ${dateStr} 打卡成功！`);
+  }
+
+  saveDataAndSync();
+  renderCalendar();
+  renderLogs();
+  showDayDetail(dateStr);
+}
       alert(`✅ ${dateStr} 补打卡成功！`);
     }
 
