@@ -5,18 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pilates Workspace | 普拉提教练全能工作台</title>
   
-  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#6895e9">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="普拉提">
 
-  <script src="https://cdn.bootcdn.net/ajax/libs/supabase-js/2.39.8/supabase.min.js" crossorigin="anonymous"></script>
-<script>
-  // 如果 BootCDN 被拦截，自动降级备用加载
-  if (typeof window.supabase === 'undefined') {
-    document.write('<script src="https://lib.baomitu.com/supabase-js/2.39.8/supabase.min.js"><\/script>');
-  }
-</script>
   <style>
     :root {
       --primary-color: #6895e9;
@@ -43,14 +35,12 @@
       padding-bottom: 60px;
     }
 
-    /* 🔒 确保所有可交互元素都能正常接收点击事件 */
     button, input, select, textarea, a, .mode-btn, .nav-btn, .calendar-day, .toggle-btn, .small-btn, .primary-btn {
       pointer-events: auto !important;
       cursor: pointer;
       touch-action: manipulation;
     }
 
-    /* 顶部导航栏 */
     .navbar {
       background-color: var(--card-bg);
       padding: 1rem 1.5rem;
@@ -94,7 +84,6 @@
       color: #ffffff !important;
     }
 
-    /* 主容器与 Tab 切换 */
     .container {
       max-width: 900px;
       margin: 20px auto;
@@ -115,7 +104,6 @@
       margin-bottom: 16px;
     }
 
-    /* 卡片容器通用样式 */
     .card, .welcome-card {
       background: var(--card-bg);
       padding: 20px;
@@ -124,7 +112,6 @@
       margin-bottom: 20px;
     }
 
-    /* 模式选择器 */
     .mode-selector {
       display: flex;
       gap: 10px;
@@ -157,7 +144,6 @@
       transform: scale(0.98);
     }
 
-    /* 动态任务添加输入框 */
     .add-task-box {
       display: flex;
       gap: 8px;
@@ -191,7 +177,6 @@
       background: var(--primary-hover);
     }
 
-    /* 任务列表 */
     .task-list {
       list-style: none;
     }
@@ -230,7 +215,6 @@
       border-color: var(--primary-color);
     }
 
-    /* 打卡日历部分 */
     .calendar-card { 
       text-align: center; 
     }
@@ -749,7 +733,7 @@
           <input type="text" id="sync-key-input" placeholder="例：my_pilates_key">
         </div>
         <div style="display: flex; gap: 10px; margin-top: 15px;">
-          <button class="primary-btn" onclick="saveSyncKey()">保存密钥并立即拉取云端数据</button>
+          <button class="primary-btn" onclick="saveSyncKey()">保存密钥并拉取云端数据</button>
           <button class="toggle-btn" onclick="uploadDataToCloud()">手动同步本地到云端</button>
         </div>
         <p id="sync-status" style="margin-top: 15px; font-weight: bold; color: var(--primary-color, #6895e9);"></p>
@@ -758,28 +742,14 @@
   </main>
 
   <script>
-    // 安全赋值工具函数（防止 DOM 找不到导致的卡死）
     function safeSetText(id, text) {
       const el = document.getElementById(id);
       if (el) el.innerText = text;
     }
 
-    // 云端配置初始化
+    // ⚡️ 原生直接 Rest API 通信（不拉取任何外网 .js 库）
     const SUPABASE_URL = 'https://wdhjcdwfebvdynyatulz.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_mzfGli751oRDZ2RBYHg6DA_iY886JTH';
-    let supabase = null;
-
-    function safeInitSupabase() {
-      try {
-        if (window.supabase && typeof window.supabase.createClient === 'function') {
-          supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-          return true;
-        }
-      } catch (e) {
-        console.warn("Supabase 加载超时，切入本地安全模式");
-      }
-      return false;
-    }
 
     let currentMode = 'home';
     let tasks = [];
@@ -801,10 +771,7 @@
       "侧卧腿系列 - 臀中肌激活 (各15次)", "天鹅展翅 - 脊柱后伸 (8次)"
     ];
 
-    // 初始化入口
     document.addEventListener('DOMContentLoaded', () => {
-      safeInitSupabase();
-
       const today = new Date().toISOString().split('T')[0];
       const logDateInput = document.getElementById('log-date');
       if (logDateInput) logDateInput.value = today;
@@ -822,7 +789,6 @@
       renderStudyNotes();
     });
 
-    // 🏷️ 切换 Tab
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -841,7 +807,6 @@
       if (tabId === 'calendar') renderCalendar();
     }
 
-    // 🏋️ 切换模式
     function setMode(mode) {
       currentMode = mode;
       document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
@@ -908,7 +873,6 @@
       }
     }
 
-    // ⏱️ 计时器
     let timerSeconds = 0;
     let timerInterval = null;
     let isTimerRunning = false;
@@ -959,7 +923,6 @@
       updateTimerDisplay();
     }
 
-    // 🗓️ 打卡日历
     let calDate = new Date();
 
     function renderCalendar() {
@@ -1062,7 +1025,6 @@
       alert(`✅ ${dateStr} 补打卡成功！`);
     }
 
-    // 📖 动作库
     function addNewExercise(e) {
       e.preventDefault();
       const name = document.getElementById('ex-name')?.value;
@@ -1130,7 +1092,6 @@
       });
     }
 
-    // 💡 知识库
     function addStudyNote(e) {
       e.preventDefault();
       const title = document.getElementById('study-title')?.value;
@@ -1172,7 +1133,6 @@
       `).join('');
     }
 
-    // ✍️ 复盘日志
     function addLog(e) {
       e.preventDefault();
       const date = document.getElementById('log-date')?.value;
@@ -1220,107 +1180,102 @@
       `).join('');
     }
 
-    // 云同步本地保存
     function saveDataAndSync() {
       localStorage.setItem('pilates_logs', JSON.stringify(logs));
       localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
       localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
-      if (supabase && syncKey) uploadDataToCloud();
+      if (syncKey) uploadDataToCloud();
     }
 
-    // 升级版云端同步逻辑（带精准诊断）
+    // ⚡️ 使用原生原生 API 直连 Supabase 云端
     async function saveSyncKey() {
       const inputVal = document.getElementById('sync-key-input')?.value.trim();
       if (!inputVal) return alert('请输入有效的同步密钥！');
       syncKey = inputVal;
       localStorage.setItem('pilates_sync_key', syncKey);
 
-      // 1. 检查 Supabase 脚本是否成功加载
-      if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
-        alert('❌ 诊断结果：Supabase 脚本库未加载成功（网络拦截）。\n建议：检查网络或更换浏览器再试。');
-        return;
-      }
-
-      // 2. 初始化 Supabase 客户端
-      if (!supabase) {
-        try {
-          supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } catch (e) {
-          alert('❌ 诊断结果：Supabase 初始化失败：' + e.message);
-          return;
-        }
-      }
-
       await downloadDataFromCloud();
     }
 
     async function uploadDataToCloud() {
-      if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
-        return alert('❌ 脚本未加载，无法连接云端！');
-      }
       if (!syncKey) return alert('请先设置同步密钥！');
-
       safeSetText('sync-status', '⏳ 正在同步到云端...');
 
       try {
-        if (!supabase) supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        const { error } = await supabase
-          .from('user_data')
-          .upsert({ id: syncKey, content: { logs, customExerciseLib, studyNotes }, updated_at: new Date() });
+        const payload = {
+          id: syncKey,
+          content: { logs, customExerciseLib, studyNotes },
+          updated_at: new Date().toISOString()
+        };
 
-        if (error) {
-          alert('❌ 云端连接失败，错误详情：\n' + error.message);
-          safeSetText('sync-status', '❌ 同步失败：' + error.message);
-        } else {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/user_data`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
           safeSetText('sync-status', '✅ 云端数据同步成功！');
-          alert('✅ 数据已成功同步到云端！');
+          alert('✅ 数据已成功保存并同步到云端！');
+        } else {
+          const errText = await res.text();
+          alert('❌ 云端同步出错：\n' + errText);
+          safeSetText('sync-status', '❌ 同步失败，详情查看弹窗');
         }
       } catch (e) {
-        alert('❌ 网络请求异常：' + e.message);
-        safeSetText('sync-status', '❌ 同步失败：网络连接受阻。');
+        alert('❌ 网络请求失败：' + e.message);
+        safeSetText('sync-status', '❌ 网络连接受阻');
       }
     }
 
     async function downloadDataFromCloud() {
-      if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
-        safeSetText('sync-status', '⚠️ 离线模式：脚本库未加载');
-        return;
-      }
       if (!syncKey) return;
-      
-      safeSetText('sync-status', '⏳ 正在从云端获取数据...');
+      safeSetText('sync-status', '⏳ 正在从云端拉取数据...');
 
       try {
-        if (!supabase) supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/user_data?id=eq.${encodeURIComponent(syncKey)}&select=content`, {
+          method: 'GET',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
 
-        const { data, error } = await supabase
-          .from('user_data')
-          .select('content')
-          .eq('id', syncKey)
-          .single();
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0 && data[0].content) {
+            const content = data[0].content;
+            logs = content.logs || [];
+            customExerciseLib = content.customExerciseLib || [];
+            studyNotes = content.studyNotes || [];
 
-        if (error) {
-          alert('⚠️ 云端拉取结果：\n' + error.message);
-          safeSetText('sync-status', '⚠️ 云端未找到此密钥的数据或表未建立');
-        } else if (data && data.content) {
-          logs = data.content.logs || [];
-          customExerciseLib = data.content.customExerciseLib || [];
-          studyNotes = data.content.studyNotes || [];
+            localStorage.setItem('pilates_logs', JSON.stringify(logs));
+            localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
+            localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
 
-          localStorage.setItem('pilates_logs', JSON.stringify(logs));
-          localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
-          localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
-
-          renderCalendar();
-          renderLibrary();
-          renderLogs();
-          renderStudyNotes();
-          safeSetText('sync-status', '✅ 云端最新数据已同步到本地！');
-          alert('✅ 已成功从云端拉取并同步最新数据！');
+            renderCalendar();
+            renderLibrary();
+            renderLogs();
+            renderStudyNotes();
+            safeSetText('sync-status', '✅ 已成功同步云端最新数据！');
+            alert('✅ 成功拉取到云端数据！手机与电脑已同步。');
+          } else {
+            alert('⚠️ 云端尚未查找到此密钥【' + syncKey + '】的数据。\n为你点击“上传”后，云端即可自动创建！');
+            uploadDataToCloud();
+          }
+        } else {
+          const errText = await res.text();
+          alert('❌ 云端拉取失败：' + errText);
+          safeSetText('sync-status', '⚠️ 拉取数据失败');
         }
       } catch (e) {
-        safeSetText('sync-status', '⚠️ 使用本地缓存数据');
+        alert('❌ 连接云端异常：' + e.message);
+        safeSetText('sync-status', '⚠️ 连接云端超时');
       }
     }
   </script>
