@@ -977,52 +977,7 @@
 
       safeSetText('detail-date-title', `📅 ${dateStr} 历史与补打卡`);
 
-      let html = '';
-      if (dayLogs.length > 0) {
-        html += dayLogs.map(l => `
-          <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
-            <p><strong>类型：</strong> ${l.type} (${l.duration} 分钟)</p>
-            <p><strong>心得：</strong> ${l.note}</p>
-            ${l.img ? `<img src="${l.img}" class="img-preview">` : ''}
-          </div>
-        `).join('');
-      } else {
-        html += `<p style="color: #777; margin-bottom: 12px;">该日期暂无记录。</p>`;
-      }
-
-      html += `
-        <div style="margin-top: 15px; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px dashed #6895e9;">
-          <h4 style="margin-bottom: 10px; color: var(--primary-color, #6895e9);">➕ 为 ${dateStr} 补打卡</h4>
-          <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
-            <select id="quick-log-type" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc;">
-              <option value="居家自主">居家自主</option>
-              <option value="馆课体验/观察">馆课体验/观察</option>
-              <option value="备课记录">备课记录</option>
-            </select>
-            <input type="number" id="quick-log-duration" placeholder="时长(分钟)" value="30" style="width: 110px; padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc;">
-          </div>
-          <textarea id="quick-log-note" rows="2" placeholder="填写训练/备课心得..." style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 10px; box-sizing: border-box;"></textarea>
-          <button class="small-btn" onclick="quickCheckin('${dateStr}')">提交补打卡</button>
-        </div>
-      `;
-
-      content.innerHTML = html;
-      card.style.display = 'block';
-    }
-
-    function quickCheckin(dateStr) {
-      const type = document.getElementById('quick-log-type')?.value || '居家自主';
-      const duration = document.getElementById('quick-log-duration')?.value || 30;
-      const note = document.getElementById('quick-log-note')?.value.trim();
-
-      if (!note) return alert('请先填写打卡心得！');
-
-      logs.unshift({ date: dateStr, type, duration, note, img: '' });
-      saveDataAndSync();
-      renderCalendar();
-      renderLogs();
-      // 1. 替换 showDayDetail 函数（增加了编辑按钮）
-function showDayDetail(dateStr) {
+      function showDayDetail(dateStr) {
       const dayLogs = logs.filter(log => log.date === dateStr);
       const card = document.getElementById('day-detail-card');
       const content = document.getElementById('detail-content');
@@ -1033,7 +988,6 @@ function showDayDetail(dateStr) {
       let html = '';
       if (dayLogs.length > 0) {
         html += dayLogs.map((l, index) => {
-          // 找到这条 log 在全局 logs 数组里的真实索引
           const realIndex = logs.findIndex(item => item === l);
           return `
             <div style="padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 12px; background: #ffffff;">
@@ -1050,7 +1004,6 @@ function showDayDetail(dateStr) {
         html += `<p style="color: #777; margin-bottom: 12px;">该日期暂无记录。</p>`;
       }
 
-      // 补打卡 / 新增记录区
       html += `
         <div style="margin-top: 15px; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px dashed #6895e9;">
           <h4 id="quick-form-title" style="margin-bottom: 10px; color: var(--primary-color, #6895e9);">➕ 为 ${dateStr} 增加新记录</h4>
@@ -1075,9 +1028,47 @@ function showDayDetail(dateStr) {
       card.style.display = 'block';
     }
 
-    // 新增：编辑已有记录的函数
     function editLog(index, dateStr) {
       const targetLog = logs[index];
+      if (!targetLog) return;
+
+      document.getElementById('edit-log-index').value = index;
+      document.getElementById('quick-log-type').value = targetLog.type;
+      document.getElementById('quick-log-duration').value = targetLog.duration;
+      document.getElementById('quick-log-note').value = targetLog.note;
+
+      safeSetText('quick-form-title', `✏️ 正在修改/补充 ${dateStr} 的记录`);
+      safeSetText('quick-submit-btn', '💾 保存修改');
+      
+      const cancelBtn = document.getElementById('quick-cancel-btn');
+      if (cancelBtn) cancelBtn.style.display = 'inline-block';
+
+      document.getElementById('quick-form-title')?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function quickCheckin(dateStr) {
+      const editIndex = parseInt(document.getElementById('edit-log-index')?.value || '-1', 10);
+      const type = document.getElementById('quick-log-type')?.value || '居家自主';
+      const duration = document.getElementById('quick-log-duration')?.value || 30;
+      const note = document.getElementById('quick-log-note')?.value.trim();
+
+      if (!note) return alert('请先填写打卡心得！');
+
+      if (editIndex >= 0 && logs[editIndex]) {
+        logs[editIndex].type = type;
+        logs[editIndex].duration = duration;
+        logs[editIndex].note = note;
+        alert(`✅ ${dateStr} 的打卡记录修改成功！`);
+      } else {
+        logs.unshift({ date: dateStr, type, duration, note, img: '' });
+        alert(`✅ ${dateStr} 打卡成功！`);
+      }
+
+      saveDataAndSync();
+      renderCalendar();
+      renderLogs();
+      showDayDetail(dateStr);
+    }
       if (!targetLog) return;
 
       document.getElementById('edit-log-index').value = index;
