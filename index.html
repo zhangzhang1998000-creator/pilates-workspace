@@ -328,6 +328,37 @@
       font-size: 0.9rem;
     }
 
+    /* 颜色折叠分类面板样式 */
+    .color-folder-group {
+      margin-bottom: 12px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .color-folder-header {
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      font-weight: bold;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+
+    .color-folder-header:hover {
+      filter: brightness(0.97);
+    }
+
+    .color-folder-body {
+      padding: 16px;
+      background: #fafafa;
+      border-top: 1px solid #e2e8f0;
+    }
+
     .log-item {
       background: var(--card-bg);
       padding: 16px;
@@ -500,7 +531,7 @@
 
       <div class="card" style="margin-bottom: 20px;">
         <h3 id="study-form-title">✍️ 记录日常学习知识与考题</h3>
-        <p class="subtitle">记录你的解剖心得、带课笔记或典型考题。卡片会自动按相同颜色聚集展示！</p>
+        <p class="subtitle">记录你的解剖心得、带课笔记或典型考题。添加后会自动按颜色分类折叠显示！</p>
         <form id="study-form" onsubmit="addStudyNote(event)">
           <input type="hidden" id="edit-study-index" value="-1">
           <div class="form-group-row">
@@ -519,7 +550,7 @@
               </select>
             </div>
             <div class="form-group">
-              <label>卡片颜色 (自动归类聚拢)：</label>
+              <label>卡片颜色分类：</label>
               <select id="study-color">
                 <option value="#3b82f6">🟦 经典蓝</option>
                 <option value="#10b981">🟩 活力绿</option>
@@ -535,7 +566,7 @@
             <textarea id="study-content" rows="3" placeholder="记录学习到的原理、答题思路、评估流程或触发点..." required></textarea>
           </div>
           <div class="form-group">
-            <label>上传知识卡片/解剖示意图/笔记照片 (编辑时若重新选择文件则覆盖)：</label>
+            <label>上传知识卡片/解剖示意图/笔记照片 (留空则保留原图)：</label>
             <input type="file" id="study-image-input" accept="image/*">
           </div>
           <div style="display: flex; gap: 10px;">
@@ -546,8 +577,9 @@
       </div>
 
       <div class="card" style="margin-bottom: 20px;">
-        <h3>📖 我的知识卡片 (同颜色自动排列)</h3>
-        <div id="study-notes-list" class="grid-list" style="margin-top: 15px;"></div>
+        <h3>📖 我的知识卡片库 (按颜色折叠分类)</h3>
+        <p class="subtitle" style="margin-bottom: 12px;">👉 点击颜色分类条，即可展开或折叠该类别的笔记</p>
+        <div id="study-notes-list" style="margin-top: 15px;"></div>
       </div>
 
       <div class="study-grid">
@@ -642,6 +674,15 @@
     let customExerciseLib = JSON.parse(localStorage.getItem('pilates_custom_lib') || '[]');
     let studyNotes = JSON.parse(localStorage.getItem('pilates_study_notes') || '[]');
     let syncKey = localStorage.getItem('pilates_sync_key') || '';
+
+    // 预定义色彩字典与名称映射
+    const COLOR_MAP = {
+      '#3b82f6': { name: '🟦 经典蓝分组', bg: '#eff6ff', text: '#1d4ed8' },
+      '#10b981': { name: '🟩 活力绿分组', bg: '#ecfdf5', text: '#047857' },
+      '#f97316': { name: '🟧 警示橙 (考题与难点)', bg: '#fff7ed', text: '#c2410c' },
+      '#8b5cf6': { name: '🟪 优雅紫分组', bg: '#f5f3ff', text: '#6d28d9' },
+      '#ec4899': { name: '🟥 浪漫粉分组', bg: '#fdf2f8', text: '#be185d' }
+    };
 
     const modeConfigs = {
       home: { title: "🏠 工作日·居家模式 (随机挑选4项)", desc: "适合居家无器械或小器械的高效练习。" },
@@ -1084,40 +1125,76 @@
       if (cancelBtn) cancelBtn.style.display = 'none';
     }
 
+    // 切换折叠与展开
+    function toggleColorFolder(colorKey) {
+      const folderBody = document.getElementById(`folder-body-${colorKey.replace('#', '')}`);
+      const folderArrow = document.getElementById(`folder-arrow-${colorKey.replace('#', '')}`);
+      if (!folderBody) return;
+
+      if (folderBody.style.display === 'none') {
+        folderBody.style.display = 'grid';
+        if (folderArrow) folderArrow.innerText = '▼ 收起';
+      } else {
+        folderBody.style.display = 'none';
+        if (folderArrow) folderArrow.innerText = '▶ 展开';
+      }
+    }
+
     function renderStudyNotes() {
       const container = document.getElementById('study-notes-list');
       if (!container) return;
 
       if (studyNotes.length === 0) {
-        container.innerHTML = `<p style="color: #777; grid-column: 1/-1;">暂无笔记，快记录下你的解剖或带课心得吧！</p>`;
+        container.innerHTML = `<p style="color: #777;">暂无笔记，快记录下你的解剖或带课心得吧！</p>`;
         return;
       }
 
-      // 根据颜色聚类/排序 (相同颜色的卡片排在一起)
-      const sortedNotesWithIndex = studyNotes.map((note, index) => ({ note, index }));
-      sortedNotesWithIndex.sort((a, b) => (a.note.color || '#3b82f6').localeCompare(b.note.color || '#3b82f6'));
+      // 按颜色进行归类/分组
+      const grouped = {};
+      studyNotes.forEach((note, index) => {
+        const color = note.color || '#3b82f6';
+        if (!grouped[color]) grouped[color] = [];
+        grouped[color].push({ note, originalIndex: index });
+      });
 
-      container.innerHTML = sortedNotesWithIndex.map(({ note, index }) => {
-        const cardColor = note.color || '#3b82f6';
-        const categoryName = note.category || '日常学习';
+      let html = '';
+      // 循环预设颜色集合，按组渲染折叠框
+      Object.keys(COLOR_MAP).forEach(colorKey => {
+        const items = grouped[colorKey];
+        if (items && items.length > 0) {
+          const config = COLOR_MAP[colorKey];
+          const cleanKey = colorKey.replace('#', '');
 
-        return `
-          <div class="action-card" style="border-left: 5px solid ${cardColor};">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-              <h4 style="color: ${cardColor}; margin: 0;">${note.title}</h4>
-              <button class="small-btn" style="padding: 2px 8px; font-size: 0.75rem; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;" onclick="editStudyNote(${index})">✏️ 编辑</button>
+          html += `
+            <div class="color-folder-group" style="border-left: 6px solid ${colorKey};">
+              <div class="color-folder-header" style="background: ${config.bg}; color: ${config.text};" onclick="toggleColorFolder('${colorKey}')">
+                <span>${config.name} (${items.length} 张)</span>
+                <span id="folder-arrow-${cleanKey}" style="font-size: 0.85rem;">▼ 收起</span>
+              </div>
+              <div class="color-folder-body grid-list" id="folder-body-${cleanKey}">
+                ${items.map(({ note, originalIndex }) => `
+                  <div class="action-card" style="border-left: 4px solid ${colorKey}; background: #ffffff;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                      <h4 style="color: ${colorKey}; margin: 0;">${note.title}</h4>
+                      <button class="small-btn" style="padding: 2px 8px; font-size: 0.75rem; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;" onclick="editStudyNote(${originalIndex})">✏️ 编辑</button>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                      <span class="tag" style="background: ${colorKey}15; color: ${colorKey}; border: 1px solid ${colorKey}30; margin: 0;">
+                        ${note.category || '日常学习'}
+                      </span>
+                      <span style="font-size: 0.75rem; color: #94a3b8;">📅 ${note.date}</span>
+                    </div>
+                    <p style="white-space: pre-wrap; color: #334155; font-size: 0.92rem;">${note.content}</p>
+                    ${note.img ? `<img src="${note.img}" class="img-preview">` : ''}
+                  </div>
+                `).join('')}
+              </div>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <span class="tag" style="background: ${cardColor}15; color: ${cardColor}; border: 1px solid ${cardColor}30; margin: 0;">
-                ${categoryName}
-              </span>
-              <span style="font-size: 0.75rem; color: #94a3b8;">📅 ${note.date}</span>
-            </div>
-            <p style="white-space: pre-wrap; color: #334155; font-size: 0.92rem;">${note.content}</p>
-            ${note.img ? `<img src="${note.img}" class="img-preview">` : ''}
-          </div>
-        `;
-      }).join('');
+          `;
+        }
+      });
+
+      container.innerHTML = html;
     }
 
     function addLog(e) {
