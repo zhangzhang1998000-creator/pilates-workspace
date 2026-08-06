@@ -376,11 +376,42 @@
       margin-bottom: 8px;
     }
 
-    .color-name-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 10px;
-      margin-top: 10px;
+    .color-setting-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #ffffff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .color-setting-item input[type="color"] {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 0;
+      background: none;
+    }
+
+    .color-setting-item input[type="text"] {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    .del-color-btn {
+      background: #fee2e2;
+      color: #ef4444;
+      border: 1px solid #fca5a5;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
     }
 
     @media (max-width: 600px) {
@@ -538,34 +569,18 @@
 
       <div class="card" style="margin-bottom: 20px; background: #f8fafc; border: 1px dashed #6895e9;">
         <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleCustomColorSettings()">
-          <h3 style="font-size: 1rem; color: var(--primary-color);">🎨 自定义颜色分组名称 (点击展开/收起设置)</h3>
+          <h3 style="font-size: 1rem; color: var(--primary-color);">🎨 自定义/无限新增颜色分类 (点击展开/收起)</h3>
           <span id="color-setting-arrow">▼</span>
         </div>
         <div id="color-setting-body" style="display: none; margin-top: 12px;">
-          <p class="subtitle" style="margin-bottom: 8px;">根据你的喜好修改 5 个颜色的分类名称（如“解剖基础”、“考题难点”等）：</p>
-          <div class="color-name-grid">
-            <div>
-              <label style="font-size: 0.8rem; font-weight: bold; color: #3b82f6;">🟦 蓝色名称：</label>
-              <input type="text" id="cname-3b82f6" value="经典蓝" style="padding: 6px; font-size: 0.85rem; width: 100%;">
-            </div>
-            <div>
-              <label style="font-size: 0.8rem; font-weight: bold; color: #10b981;">🟩 绿色名称：</label>
-              <input type="text" id="cname-10b981" value="活力绿" style="padding: 6px; font-size: 0.85rem; width: 100%;">
-            </div>
-            <div>
-              <label style="font-size: 0.8rem; font-weight: bold; color: #f97316;">🟧 橙色名称：</label>
-              <input type="text" id="cname-f97316" value="警示橙 (考题与难点)" style="padding: 6px; font-size: 0.85rem; width: 100%;">
-            </div>
-            <div>
-              <label style="font-size: 0.8rem; font-weight: bold; color: #8b5cf6;">🟪 紫色名称：</label>
-              <input type="text" id="cname-8b5cf6" value="优雅紫" style="padding: 6px; font-size: 0.85rem; width: 100%;">
-            </div>
-            <div>
-              <label style="font-size: 0.8rem; font-weight: bold; color: #ec4899;">🟥 粉色名称：</label>
-              <input type="text" id="cname-ec4899" value="浪漫粉" style="padding: 6px; font-size: 0.85rem; width: 100%;">
-            </div>
+          <p class="subtitle" style="margin-bottom: 8px;">在这里可以自由修改现有分类名称、更改颜色，或**添加无限个新颜色分类**：</p>
+          
+          <div id="color-items-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 10px;"></div>
+          
+          <div style="display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
+            <button class="small-btn" style="background: #10b981;" onclick="addNewColorCategory()">➕ 增加新颜色分类</button>
+            <button class="small-btn" style="flex: 1;" onclick="saveCustomColorConfig()">💾 保存所有分类配置</button>
           </div>
-          <button class="small-btn" style="margin-top: 12px; width: 100%;" onclick="saveCustomColorNames()">💾 保存分类名称设置</button>
         </div>
       </div>
 
@@ -591,13 +606,7 @@
             </div>
             <div class="form-group">
               <label>卡片颜色归类：</label>
-              <select id="study-color">
-                <option value="#3b82f6" id="opt-3b82f6">🟦 经典蓝</option>
-                <option value="#10b981" id="opt-10b981">🟩 活力绿</option>
-                <option value="#f97316" id="opt-f97316">🟧 警示橙</option>
-                <option value="#8b5cf6" id="opt-8b5cf6">🟪 优雅紫</option>
-                <option value="#ec4899" id="opt-ec4899">🟥 浪漫粉</option>
-              </select>
+              <select id="study-color"></select>
             </div>
           </div>
 
@@ -715,34 +724,78 @@
     let studyNotes = JSON.parse(localStorage.getItem('pilates_study_notes') || '[]');
     let syncKey = localStorage.getItem('pilates_sync_key') || '';
 
-    // 默认色彩与自定义分类名称映射
-    let customColorNames = JSON.parse(localStorage.getItem('pilates_color_names') || '{}');
-    
-    const defaultColorMap = {
-      '#3b82f6': { defaultName: '经典蓝', prefix: '🟦', bg: '#eff6ff', text: '#1d4ed8' },
-      '#10b981': { defaultName: '活力绿', prefix: '🟩', bg: '#ecfdf5', text: '#047857' },
-      '#f97316': { defaultName: '警示橙 (考题与难点)', prefix: '🟧', bg: '#fff7ed', text: '#c2410c' },
-      '#8b5cf6': { defaultName: '优雅紫', prefix: '🟪', bg: '#f5f3ff', text: '#6d28d9' },
-      '#ec4899': { defaultName: '浪漫粉', prefix: '🟥', bg: '#fdf2f8', text: '#be185d' }
-    };
+    // 默认基础颜色分类列表（可自由扩展增删）
+    const defaultColorCategories = [
+      { hex: '#3b82f6', name: '经典蓝 (基础解剖)' },
+      { hex: '#10b981', name: '活力绿 (动作编排)' },
+      { hex: '#f97316', name: '警示橙 (考题与难点)' },
+      { hex: '#8b5cf6', name: '优雅紫 (带课口令)' },
+      { hex: '#ec4899', name: '浪漫粉 (客户评估)' }
+    ];
 
-    function getColorName(hex) {
-      if (customColorNames[hex]) return customColorNames[hex];
-      return defaultColorMap[hex]?.defaultName || hex;
+    let colorCategories = JSON.parse(localStorage.getItem('pilates_color_categories') || 'null');
+    if (!colorCategories || colorCategories.length === 0) {
+      colorCategories = defaultColorCategories;
     }
 
-    function initColorNameUI() {
-      Object.keys(defaultColorMap).forEach(hex => {
-        const key = hex.replace('#', '');
-        const input = document.getElementById(`cname-${key}`);
-        if (input) input.value = getColorName(hex);
+    function hexToRgbLight(hex) {
+      let c = hex.replace('#', '');
+      if (c.length === 3) c = c.split('').map(x => x + x).join('');
+      const num = parseInt(c, 16);
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+      return `rgba(${r}, ${g}, ${b}, 0.12)`;
+    }
 
-        const opt = document.getElementById(`opt-${key}`);
-        if (opt) {
-          const prefix = defaultColorMap[hex].prefix;
-          opt.innerText = `${prefix} ${getColorName(hex)}`;
-        }
-      });
+    function initColorConfigUI() {
+      const container = document.getElementById('color-items-container');
+      if (container) {
+        container.innerHTML = colorCategories.map((item, idx) => `
+          <div class="color-setting-item">
+            <input type="color" value="${item.hex}" onchange="updateColorHex(${idx}, this.value)">
+            <input type="text" value="${item.name}" placeholder="分类名称" onchange="updateColorName(${idx}, this.value)">
+            <button class="del-color-btn" onclick="removeColorCategory(${idx})">🗑️ 删除</button>
+          </div>
+        `).join('');
+      }
+
+      const selectEl = document.getElementById('study-color');
+      if (selectEl) {
+        selectEl.innerHTML = colorCategories.map(item => `
+          <option value="${item.hex}">${item.name}</option>
+        `).join('');
+      }
+    }
+
+    function updateColorHex(index, newHex) {
+      if (colorCategories[index]) {
+        colorCategories[index].hex = newHex;
+      }
+    }
+
+    function updateColorName(index, newName) {
+      if (colorCategories[index]) {
+        colorCategories[index].name = newName;
+      }
+    }
+
+    function addNewColorCategory() {
+      const randomHex = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+      colorCategories.push({ hex: randomHex, name: `自定义分类 ${colorCategories.length + 1}` });
+      initColorConfigUI();
+    }
+
+    function removeColorCategory(index) {
+      if (colorCategories.length <= 1) {
+        return alert('⚠️ 至少需要保留一个颜色分类！');
+      }
+      if (confirm('确定要删除这个颜色分类吗？')) {
+        colorCategories.splice(index, 1);
+        initColorConfigUI();
+        renderStudyNotes();
+        saveDataAndSync();
+      }
     }
 
     function toggleCustomColorSettings() {
@@ -758,18 +811,12 @@
       }
     }
 
-    function saveCustomColorNames() {
-      Object.keys(defaultColorMap).forEach(hex => {
-        const key = hex.replace('#', '');
-        const val = document.getElementById(`cname-${key}`)?.value.trim();
-        if (val) customColorNames[hex] = val;
-      });
-
-      localStorage.setItem('pilates_color_names', JSON.stringify(customColorNames));
-      initColorNameUI();
+    function saveCustomColorConfig() {
+      localStorage.setItem('pilates_color_categories', JSON.stringify(colorCategories));
+      initColorConfigUI();
       renderStudyNotes();
       saveDataAndSync();
-      alert('✅ 分类名称更新成功！');
+      alert('✅ 颜色分类设置成功并已保存！');
     }
 
     const modeConfigs = {
@@ -790,7 +837,7 @@
       const logDateInput = document.getElementById('log-date');
       if (logDateInput) logDateInput.value = today;
 
-      initColorNameUI();
+      initColorConfigUI();
 
       if (syncKey) {
         const syncInput = document.getElementById('sync-key-input');
@@ -1149,7 +1196,7 @@
       const editIndex = parseInt(document.getElementById('edit-study-index')?.value || '-1', 10);
       const title = document.getElementById('study-title')?.value;
       const category = document.getElementById('study-category')?.value || '日常学习';
-      const color = document.getElementById('study-color')?.value || '#3b82f6';
+      const color = document.getElementById('study-color')?.value || colorCategories[0]?.hex || '#3b82f6';
       const content = document.getElementById('study-content')?.value;
       const fileInput = document.getElementById('study-image-input');
       const date = new Date().toLocaleDateString();
@@ -1192,7 +1239,7 @@
       document.getElementById('edit-study-index').value = index;
       document.getElementById('study-title').value = note.title || '';
       document.getElementById('study-category').value = note.category || '日常学习';
-      document.getElementById('study-color').value = note.color || '#3b82f6';
+      document.getElementById('study-color').value = note.color || colorCategories[0]?.hex || '#3b82f6';
       document.getElementById('study-content').value = note.content || '';
 
       safeSetText('study-form-title', '✏️ 编辑知识卡片与颜色归类');
@@ -1215,9 +1262,9 @@
       if (cancelBtn) cancelBtn.style.display = 'none';
     }
 
-    function toggleColorFolder(colorKey) {
-      const folderBody = document.getElementById(`folder-body-${colorKey.replace('#', '')}`);
-      const folderArrow = document.getElementById(`folder-arrow-${colorKey.replace('#', '')}`);
+    function toggleColorFolder(cleanHex) {
+      const folderBody = document.getElementById(`folder-body-${cleanHex}`);
+      const folderArrow = document.getElementById(`folder-arrow-${cleanHex}`);
       if (!folderBody) return;
 
       if (folderBody.style.display === 'none') {
@@ -1240,23 +1287,24 @@
 
       const grouped = {};
       studyNotes.forEach((note, index) => {
-        const color = note.color || '#3b82f6';
+        const color = note.color || colorCategories[0]?.hex || '#3b82f6';
         if (!grouped[color]) grouped[color] = [];
         grouped[color].push({ note, originalIndex: index });
       });
 
       let html = '';
-      Object.keys(defaultColorMap).forEach(colorKey => {
+      colorCategories.forEach(cat => {
+        const colorKey = cat.hex;
         const items = grouped[colorKey];
         if (items && items.length > 0) {
-          const config = defaultColorMap[colorKey];
-          const customTitle = getColorName(colorKey);
+          const customTitle = cat.name;
           const cleanKey = colorKey.replace('#', '');
+          const bgLight = hexToRgbLight(colorKey);
 
           html += `
             <div class="color-folder-group" style="border-left: 6px solid ${colorKey};">
-              <div class="color-folder-header" style="background: ${config.bg}; color: ${config.text};" onclick="toggleColorFolder('${colorKey}')">
-                <span>${config.prefix} ${customTitle} (${items.length} 张)</span>
+              <div class="color-folder-header" style="background: ${bgLight}; color: #1e293b;" onclick="toggleColorFolder('${cleanKey}')">
+                <span>🎨 ${customTitle} (${items.length} 张)</span>
                 <span id="folder-arrow-${cleanKey}" style="font-size: 0.85rem;">▼ 收起</span>
               </div>
               <div class="color-folder-body grid-list" id="folder-body-${cleanKey}">
@@ -1267,7 +1315,7 @@
                       <button class="small-btn" style="padding: 2px 8px; font-size: 0.75rem; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;" onclick="editStudyNote(${originalIndex})">✏️ 编辑</button>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                      <span class="tag" style="background: ${colorKey}15; color: ${colorKey}; border: 1px solid ${colorKey}30; margin: 0;">
+                      <span class="tag" style="background: ${colorKey}18; color: ${colorKey}; border: 1px solid ${colorKey}40; margin: 0;">
                         ${note.category || '日常学习'}
                       </span>
                       <span style="font-size: 0.75rem; color: #94a3b8;">📅 ${note.date}</span>
@@ -1282,7 +1330,7 @@
         }
       });
 
-      container.innerHTML = html;
+      container.innerHTML = html || `<p style="color: #777;">未匹配到卡片分类。</p>`;
     }
 
     function addLog(e) {
@@ -1336,7 +1384,7 @@
       localStorage.setItem('pilates_logs', JSON.stringify(logs));
       localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
       localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
-      localStorage.setItem('pilates_color_names', JSON.stringify(customColorNames));
+      localStorage.setItem('pilates_color_categories', JSON.stringify(colorCategories));
       if (syncKey) uploadDataToCloud();
     }
 
@@ -1356,7 +1404,7 @@
       try {
         const payload = {
           id: syncKey,
-          content: { logs, customExerciseLib, studyNotes, customColorNames },
+          content: { logs, customExerciseLib, studyNotes, colorCategories },
           updated_at: new Date().toISOString()
         };
 
@@ -1405,14 +1453,14 @@
             logs = content.logs || [];
             customExerciseLib = content.customExerciseLib || [];
             studyNotes = content.studyNotes || [];
-            customColorNames = content.customColorNames || {};
+            colorCategories = content.colorCategories || defaultColorCategories;
 
             localStorage.setItem('pilates_logs', JSON.stringify(logs));
             localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
             localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
-            localStorage.setItem('pilates_color_names', JSON.stringify(customColorNames));
+            localStorage.setItem('pilates_color_categories', JSON.stringify(colorCategories));
 
-            initColorNameUI();
+            initColorConfigUI();
             renderCalendar();
             renderLibrary();
             renderLogs();
