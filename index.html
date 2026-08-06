@@ -376,6 +376,13 @@
       margin-bottom: 8px;
     }
 
+    .color-name-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
     @media (max-width: 600px) {
       .navbar { flex-direction: column; gap: 12px; padding: 1rem; }
       .mode-selector, .form-group-row { flex-direction: column; gap: 0; }
@@ -529,9 +536,42 @@
     <section id="study" class="tab-content">
       <h2>📚 普拉提兼职/教培进阶知识库</h2>
 
+      <div class="card" style="margin-bottom: 20px; background: #f8fafc; border: 1px dashed #6895e9;">
+        <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleCustomColorSettings()">
+          <h3 style="font-size: 1rem; color: var(--primary-color);">🎨 自定义颜色分组名称 (点击展开/收起设置)</h3>
+          <span id="color-setting-arrow">▼</span>
+        </div>
+        <div id="color-setting-body" style="display: none; margin-top: 12px;">
+          <p class="subtitle" style="margin-bottom: 8px;">根据你的喜好修改 5 个颜色的分类名称（如“解剖基础”、“考题难点”等）：</p>
+          <div class="color-name-grid">
+            <div>
+              <label style="font-size: 0.8rem; font-weight: bold; color: #3b82f6;">🟦 蓝色名称：</label>
+              <input type="text" id="cname-3b82f6" value="经典蓝" style="padding: 6px; font-size: 0.85rem; width: 100%;">
+            </div>
+            <div>
+              <label style="font-size: 0.8rem; font-weight: bold; color: #10b981;">🟩 绿色名称：</label>
+              <input type="text" id="cname-10b981" value="活力绿" style="padding: 6px; font-size: 0.85rem; width: 100%;">
+            </div>
+            <div>
+              <label style="font-size: 0.8rem; font-weight: bold; color: #f97316;">🟧 橙色名称：</label>
+              <input type="text" id="cname-f97316" value="警示橙 (考题与难点)" style="padding: 6px; font-size: 0.85rem; width: 100%;">
+            </div>
+            <div>
+              <label style="font-size: 0.8rem; font-weight: bold; color: #8b5cf6;">🟪 紫色名称：</label>
+              <input type="text" id="cname-8b5cf6" value="优雅紫" style="padding: 6px; font-size: 0.85rem; width: 100%;">
+            </div>
+            <div>
+              <label style="font-size: 0.8rem; font-weight: bold; color: #ec4899;">🟥 粉色名称：</label>
+              <input type="text" id="cname-ec4899" value="浪漫粉" style="padding: 6px; font-size: 0.85rem; width: 100%;">
+            </div>
+          </div>
+          <button class="small-btn" style="margin-top: 12px; width: 100%;" onclick="saveCustomColorNames()">💾 保存分类名称设置</button>
+        </div>
+      </div>
+
       <div class="card" style="margin-bottom: 20px;">
         <h3 id="study-form-title">✍️ 记录日常学习知识与考题</h3>
-        <p class="subtitle">记录你的解剖心得、带课笔记或典型考题。添加后会自动按颜色分类折叠显示！</p>
+        <p class="subtitle">记录你的解剖心得、带课笔记或典型考题。添加后会自动按选择的分类名称折叠显示！</p>
         <form id="study-form" onsubmit="addStudyNote(event)">
           <input type="hidden" id="edit-study-index" value="-1">
           <div class="form-group-row">
@@ -550,13 +590,13 @@
               </select>
             </div>
             <div class="form-group">
-              <label>卡片颜色分类：</label>
+              <label>卡片颜色归类：</label>
               <select id="study-color">
-                <option value="#3b82f6">🟦 经典蓝</option>
-                <option value="#10b981">🟩 活力绿</option>
-                <option value="#f97316">🟧 警示橙 (考题推荐)</option>
-                <option value="#8b5cf6">🟪 优雅紫</option>
-                <option value="#ec4899">🟥 浪漫粉</option>
+                <option value="#3b82f6" id="opt-3b82f6">🟦 经典蓝</option>
+                <option value="#10b981" id="opt-10b981">🟩 活力绿</option>
+                <option value="#f97316" id="opt-f97316">🟧 警示橙</option>
+                <option value="#8b5cf6" id="opt-8b5cf6">🟪 优雅紫</option>
+                <option value="#ec4899" id="opt-ec4899">🟥 浪漫粉</option>
               </select>
             </div>
           </div>
@@ -577,8 +617,8 @@
       </div>
 
       <div class="card" style="margin-bottom: 20px;">
-        <h3>📖 我的知识卡片库 (按颜色折叠分类)</h3>
-        <p class="subtitle" style="margin-bottom: 12px;">👉 点击颜色分类条，即可展开或折叠该类别的笔记</p>
+        <h3>📖 我的知识卡片库 (按颜色分类折叠)</h3>
+        <p class="subtitle" style="margin-bottom: 12px;">👉 点击分类标题栏，即可展开或折叠对应的知识卡片</p>
         <div id="study-notes-list" style="margin-top: 15px;"></div>
       </div>
 
@@ -675,14 +715,62 @@
     let studyNotes = JSON.parse(localStorage.getItem('pilates_study_notes') || '[]');
     let syncKey = localStorage.getItem('pilates_sync_key') || '';
 
-    // 预定义色彩字典与名称映射
-    const COLOR_MAP = {
-      '#3b82f6': { name: '🟦 经典蓝分组', bg: '#eff6ff', text: '#1d4ed8' },
-      '#10b981': { name: '🟩 活力绿分组', bg: '#ecfdf5', text: '#047857' },
-      '#f97316': { name: '🟧 警示橙 (考题与难点)', bg: '#fff7ed', text: '#c2410c' },
-      '#8b5cf6': { name: '🟪 优雅紫分组', bg: '#f5f3ff', text: '#6d28d9' },
-      '#ec4899': { name: '🟥 浪漫粉分组', bg: '#fdf2f8', text: '#be185d' }
+    // 默认色彩与自定义分类名称映射
+    let customColorNames = JSON.parse(localStorage.getItem('pilates_color_names') || '{}');
+    
+    const defaultColorMap = {
+      '#3b82f6': { defaultName: '经典蓝', prefix: '🟦', bg: '#eff6ff', text: '#1d4ed8' },
+      '#10b981': { defaultName: '活力绿', prefix: '🟩', bg: '#ecfdf5', text: '#047857' },
+      '#f97316': { defaultName: '警示橙 (考题与难点)', prefix: '🟧', bg: '#fff7ed', text: '#c2410c' },
+      '#8b5cf6': { defaultName: '优雅紫', prefix: '🟪', bg: '#f5f3ff', text: '#6d28d9' },
+      '#ec4899': { defaultName: '浪漫粉', prefix: '🟥', bg: '#fdf2f8', text: '#be185d' }
     };
+
+    function getColorName(hex) {
+      if (customColorNames[hex]) return customColorNames[hex];
+      return defaultColorMap[hex]?.defaultName || hex;
+    }
+
+    function initColorNameUI() {
+      Object.keys(defaultColorMap).forEach(hex => {
+        const key = hex.replace('#', '');
+        const input = document.getElementById(`cname-${key}`);
+        if (input) input.value = getColorName(hex);
+
+        const opt = document.getElementById(`opt-${key}`);
+        if (opt) {
+          const prefix = defaultColorMap[hex].prefix;
+          opt.innerText = `${prefix} ${getColorName(hex)}`;
+        }
+      });
+    }
+
+    function toggleCustomColorSettings() {
+      const body = document.getElementById('color-setting-body');
+      const arrow = document.getElementById('color-setting-arrow');
+      if (!body) return;
+      if (body.style.display === 'none') {
+        body.style.display = 'block';
+        if (arrow) arrow.innerText = '▲';
+      } else {
+        body.style.display = 'none';
+        if (arrow) arrow.innerText = '▼';
+      }
+    }
+
+    function saveCustomColorNames() {
+      Object.keys(defaultColorMap).forEach(hex => {
+        const key = hex.replace('#', '');
+        const val = document.getElementById(`cname-${key}`)?.value.trim();
+        if (val) customColorNames[hex] = val;
+      });
+
+      localStorage.setItem('pilates_color_names', JSON.stringify(customColorNames));
+      initColorNameUI();
+      renderStudyNotes();
+      saveDataAndSync();
+      alert('✅ 分类名称更新成功！');
+    }
 
     const modeConfigs = {
       home: { title: "🏠 工作日·居家模式 (随机挑选4项)", desc: "适合居家无器械或小器械的高效练习。" },
@@ -701,6 +789,8 @@
       const today = new Date().toISOString().split('T')[0];
       const logDateInput = document.getElementById('log-date');
       if (logDateInput) logDateInput.value = today;
+
+      initColorNameUI();
 
       if (syncKey) {
         const syncInput = document.getElementById('sync-key-input');
@@ -1105,7 +1195,7 @@
       document.getElementById('study-color').value = note.color || '#3b82f6';
       document.getElementById('study-content').value = note.content || '';
 
-      safeSetText('study-form-title', '✏️ 编辑知识卡片与颜色');
+      safeSetText('study-form-title', '✏️ 编辑知识卡片与颜色归类');
       safeSetText('study-submit-btn', '💾 保存修改');
 
       const cancelBtn = document.getElementById('study-cancel-btn');
@@ -1125,7 +1215,6 @@
       if (cancelBtn) cancelBtn.style.display = 'none';
     }
 
-    // 切换折叠与展开
     function toggleColorFolder(colorKey) {
       const folderBody = document.getElementById(`folder-body-${colorKey.replace('#', '')}`);
       const folderArrow = document.getElementById(`folder-arrow-${colorKey.replace('#', '')}`);
@@ -1149,7 +1238,6 @@
         return;
       }
 
-      // 按颜色进行归类/分组
       const grouped = {};
       studyNotes.forEach((note, index) => {
         const color = note.color || '#3b82f6';
@@ -1158,17 +1246,17 @@
       });
 
       let html = '';
-      // 循环预设颜色集合，按组渲染折叠框
-      Object.keys(COLOR_MAP).forEach(colorKey => {
+      Object.keys(defaultColorMap).forEach(colorKey => {
         const items = grouped[colorKey];
         if (items && items.length > 0) {
-          const config = COLOR_MAP[colorKey];
+          const config = defaultColorMap[colorKey];
+          const customTitle = getColorName(colorKey);
           const cleanKey = colorKey.replace('#', '');
 
           html += `
             <div class="color-folder-group" style="border-left: 6px solid ${colorKey};">
               <div class="color-folder-header" style="background: ${config.bg}; color: ${config.text};" onclick="toggleColorFolder('${colorKey}')">
-                <span>${config.name} (${items.length} 张)</span>
+                <span>${config.prefix} ${customTitle} (${items.length} 张)</span>
                 <span id="folder-arrow-${cleanKey}" style="font-size: 0.85rem;">▼ 收起</span>
               </div>
               <div class="color-folder-body grid-list" id="folder-body-${cleanKey}">
@@ -1248,6 +1336,7 @@
       localStorage.setItem('pilates_logs', JSON.stringify(logs));
       localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
       localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
+      localStorage.setItem('pilates_color_names', JSON.stringify(customColorNames));
       if (syncKey) uploadDataToCloud();
     }
 
@@ -1267,7 +1356,7 @@
       try {
         const payload = {
           id: syncKey,
-          content: { logs, customExerciseLib, studyNotes },
+          content: { logs, customExerciseLib, studyNotes, customColorNames },
           updated_at: new Date().toISOString()
         };
 
@@ -1316,11 +1405,14 @@
             logs = content.logs || [];
             customExerciseLib = content.customExerciseLib || [];
             studyNotes = content.studyNotes || [];
+            customColorNames = content.customColorNames || {};
 
             localStorage.setItem('pilates_logs', JSON.stringify(logs));
             localStorage.setItem('pilates_custom_lib', JSON.stringify(customExerciseLib));
             localStorage.setItem('pilates_study_notes', JSON.stringify(studyNotes));
+            localStorage.setItem('pilates_color_names', JSON.stringify(customColorNames));
 
+            initColorNameUI();
             renderCalendar();
             renderLibrary();
             renderLogs();
